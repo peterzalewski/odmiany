@@ -104,6 +104,8 @@ var heuristics = []heuristic{
 	heuristicAsc,
 	// -jść verbs (from iść): przejść → przejdę
 	heuristicJsc,
+	// -być verbs (perfective): zdobyć → zdobędę
+	heuristicByc,
 	// -ciąć verbs: rozciąć → rozetnę (suppletive tn- with e-insertion)
 	heuristicCiac,
 	// -giąć verbs: giąć → gnę
@@ -603,6 +605,30 @@ func heuristicJsc(infinitive string) (PresentTense, bool) {
 		Pl1: prefix + "jdziemy",
 		Pl2: prefix + "jdziecie",
 		Pl3: prefix + "jdą",
+	}, true
+}
+
+// heuristicByc handles perfective -być verbs.
+// These are NOT the same as bywać (imperfective of być).
+// zdobyć → zdobędę, przybyć → przybędę, nabyć → nabędę
+// Pattern: prefix + być → prefix + będę
+func heuristicByc(infinitive string) (PresentTense, bool) {
+	if !strings.HasSuffix(infinitive, "być") {
+		return PresentTense{}, false
+	}
+	// Bare "być" is suppletive (jestem), handled by irregulars
+	prefix := strings.TrimSuffix(infinitive, "być")
+	if prefix == "" {
+		return PresentTense{}, false
+	}
+	// Perfective -być verbs use będ- stem
+	return PresentTense{
+		Sg1: prefix + "będę",
+		Sg2: prefix + "będziesz",
+		Sg3: prefix + "będzie",
+		Pl1: prefix + "będziemy",
+		Pl2: prefix + "będziecie",
+		Pl3: prefix + "będą",
 	}, true
 }
 

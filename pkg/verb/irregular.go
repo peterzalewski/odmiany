@@ -14,6 +14,10 @@ var irregularVerbs = map[string]PresentTense{
 		Sg1: "mam", Sg2: "masz", Sg3: "ma",
 		Pl1: "mamy", Pl2: "macie", Pl3: "mają",
 	},
+	"musieć": {
+		Sg1: "muszę", Sg2: "musisz", Sg3: "musi",
+		Pl1: "musimy", Pl2: "musicie", Pl3: "muszą",
+	},
 	"jeść": {
 		Sg1: "jem", Sg2: "jesz", Sg3: "je",
 		Pl1: "jemy", Pl2: "jecie", Pl3: "jedzą",
