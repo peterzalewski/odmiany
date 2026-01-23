@@ -123,6 +123,13 @@ func loadFrequency(path string) map[string]int {
 	return freq
 }
 
+// Homographs: verb forms that collide with common non-verb words
+// These would give misleading frequency data
+var homographs = map[string]bool{
+	"mnie": true, // pronoun "me" (dat/acc) vs. Sg3 of "miąć" (to crumple)
+	"mną":  true, // pronoun "me" (instrumental) vs. Pl3 of "miąć"
+}
+
 // getVerbFrequency returns the highest frequency among the infinitive and all conjugated forms
 func getVerbFrequency(freqMap map[string]int, e corpusEntry) int {
 	maxFreq := 0
@@ -135,6 +142,9 @@ func getVerbFrequency(freqMap map[string]int, e corpusEntry) int {
 	// Check all conjugated forms (these appear more often in subtitles)
 	forms := []string{e.Sg1, e.Sg2, e.Sg3, e.Pl1, e.Pl2, e.Pl3}
 	for _, form := range forms {
+		if homographs[form] {
+			continue // skip known homographs
+		}
 		if f, ok := freqMap[form]; ok && f > maxFreq {
 			maxFreq = f
 		}
