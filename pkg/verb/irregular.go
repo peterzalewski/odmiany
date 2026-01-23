@@ -26,6 +26,10 @@ var irregularVerbs = map[string]PresentTense{
 		Sg1: "wezmę", Sg2: "weźmiesz", Sg3: "weźmie",
 		Pl1: "weźmiemy", Pl2: "weźmiecie", Pl3: "wezmą",
 	},
+	"ciąć": {
+		Sg1: "tnę", Sg2: "tniesz", Sg3: "tnie",
+		Pl1: "tniemy", Pl2: "tniecie", Pl3: "tną",
+	},
 	"iść": {
 		Sg1: "idę", Sg2: "idziesz", Sg3: "idzie",
 		Pl1: "idziemy", Pl2: "idziecie", Pl3: "idą",
@@ -140,8 +144,8 @@ var irregularBases = map[string]string{
 
 // Common prefixes in Polish
 var verbPrefixes = []string{
-	"prze", "przy", "roz", "wy", "za", "na", "po", "do", "od", "ob",
-	"pod", "nad", "wz", "u", "s", "z", "w",
+	"prze", "przy", "roz", "roze", "wy", "za", "na", "po", "do", "od", "ode", "ob", "obe",
+	"pod", "pode", "nad", "nade", "wz", "wze", "u", "s", "z", "ze", "w", "we",
 }
 
 // lookupIrregularWithPrefix tries to find an irregular verb,

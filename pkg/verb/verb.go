@@ -102,6 +102,22 @@ var heuristics = []heuristic{
 	heuristicNac,
 	// -ąść verbs: trząść → trzęsę, siąść → siądę
 	heuristicAsc,
+	// -jść verbs (from iść): przejść → przejdę
+	heuristicJsc,
+	// -ciąć verbs: rozciąć → rozetnę (suppletive tn- with e-insertion)
+	heuristicCiac,
+	// -giąć verbs: giąć → gnę
+	heuristicGiac,
+	// -paść verbs: paść → padnę
+	heuristicPasc,
+	// -stać verbs (get/cease): dostać → dostanę
+	heuristicStacNastal,
+	// -biec verbs: pobiec → pobiegnę
+	heuristicBiec,
+	// -słać verbs (send): wysłać → wyślę
+	heuristicSlac,
+	// -trzeć/-drzeć verbs: trzeć → trę
+	heuristicTrzec,
 	// -ść/-źć verbs: nieść → niosę
 	heuristicSc,
 	// -c verbs: móc → mogę
@@ -568,11 +584,267 @@ func heuristicAsc(infinitive string) (PresentTense, bool) {
 	return PresentTense{}, false
 }
 
+// heuristicJsc handles -jść verbs (prefixed forms of iść).
+// przejść → przejdę, przejdziesz, przejdzie...
+// The pattern is: prefix + jść → prefix + jd- (d-insertion)
+func heuristicJsc(infinitive string) (PresentTense, bool) {
+	if !strings.HasSuffix(infinitive, "jść") {
+		return PresentTense{}, false
+	}
+	// Get prefix (everything before jść)
+	prefix := strings.TrimSuffix(infinitive, "jść")
+	if prefix == "" {
+		return PresentTense{}, false // bare "jść" doesn't exist, iść is handled by irregulars
+	}
+	return PresentTense{
+		Sg1: prefix + "jdę",
+		Sg2: prefix + "jdziesz",
+		Sg3: prefix + "jdzie",
+		Pl1: prefix + "jdziemy",
+		Pl2: prefix + "jdziecie",
+		Pl3: prefix + "jdą",
+	}, true
+}
+
+// heuristicCiac handles -ciąć verbs (to cut).
+// ciąć → tnę (base form, handled by irregulars)
+// Prefixed forms need e-insertion before consonant clusters:
+// - przyciąć → przytnę (vowel prefix, no insertion)
+// - rozciąć → rozetnę (consonant prefix, e inserted)
+// - ściąć → zetnę (ś→z + e insertion)
+func heuristicCiac(infinitive string) (PresentTense, bool) {
+	if !strings.HasSuffix(infinitive, "ciąć") {
+		return PresentTense{}, false
+	}
+	// Base ciąć is handled by irregulars
+	prefix := strings.TrimSuffix(infinitive, "ciąć")
+	if prefix == "" {
+		return PresentTense{}, false
+	}
+
+	// Handle ś- prefix specially: ściąć → zetnę
+	if prefix == "ś" {
+		return PresentTense{
+			Sg1: "zetnę", Sg2: "zetniesz", Sg3: "zetnie",
+			Pl1: "zetniemy", Pl2: "zetniecie", Pl3: "zetną",
+		}, true
+	}
+
+	// Determine if we need e-insertion
+	// Prefixes ending in vowel: przy-, wy-, u-, o-, etc. → no insertion
+	// Prefixes ending in consonant: roz-, od-, pod-, nad-, etc. → e insertion
+	needsE := false
+	runes := []rune(prefix)
+	lastChar := runes[len(runes)-1]
+	vowels := map[rune]bool{'a': true, 'e': true, 'i': true, 'o': true, 'u': true, 'y': true, 'ó': true}
+	if !vowels[lastChar] {
+		needsE = true
+	}
+
+	var stem string
+	if needsE {
+		stem = prefix + "etn"
+	} else {
+		stem = prefix + "tn"
+	}
+
+	return PresentTense{
+		Sg1: stem + "ę",
+		Sg2: stem + "iesz",
+		Sg3: stem + "ie",
+		Pl1: stem + "iemy",
+		Pl2: stem + "iecie",
+		Pl3: stem + "ą",
+	}, true
+}
+
+// heuristicGiac handles -giąć verbs.
+// giąć → gnę, gniesz, gnie (i→n, ą→ę)
+// zagiąć → zagnę, wygiąć → wygnę
+func heuristicGiac(infinitive string) (PresentTense, bool) {
+	if !strings.HasSuffix(infinitive, "giąć") {
+		return PresentTense{}, false
+	}
+	prefix := strings.TrimSuffix(infinitive, "iąć") // keeps 'g'
+	return PresentTense{
+		Sg1: prefix + "nę",
+		Sg2: prefix + "niesz",
+		Sg3: prefix + "nie",
+		Pl1: prefix + "niemy",
+		Pl2: prefix + "niecie",
+		Pl3: prefix + "ną",
+	}, true
+}
+
+// heuristicPasc handles -paść verbs.
+// paść → padnę, padniesz, padnie (ść→dnę - d-insertion)
+// upaść → upadnę, napaść → napadnę, wpaść → wpadnę
+func heuristicPasc(infinitive string) (PresentTense, bool) {
+	if !strings.HasSuffix(infinitive, "paść") {
+		return PresentTense{}, false
+	}
+	prefix := strings.TrimSuffix(infinitive, "ść") // keeps 'pa'
+	return PresentTense{
+		Sg1: prefix + "dnę",
+		Sg2: prefix + "dniesz",
+		Sg3: prefix + "dnie",
+		Pl1: prefix + "dniemy",
+		Pl2: prefix + "dniecie",
+		Pl3: prefix + "dną",
+	}, true
+}
+
+// heuristicStacNastal handles -stać verbs meaning "get/become/cease" (not "stand").
+// dostać → dostanę, przestać → przestanę, powstać → powstanę
+// These use -stanę/-staniesz pattern (n-insertion), unlike stać "stand" → stoję
+//
+// We only match if the prefix is a known verbal prefix (do-, prze-, po-, etc.)
+// to avoid matching verbs like świstać, podrastać which are not from stać.
+func heuristicStacNastal(infinitive string) (PresentTense, bool) {
+	if !strings.HasSuffix(infinitive, "stać") {
+		return PresentTense{}, false
+	}
+	// Bare "stać" (to stand) is handled by irregulars → stoję
+	prefix := strings.TrimSuffix(infinitive, "stać")
+	if prefix == "" {
+		return PresentTense{}, false
+	}
+
+	// Only match if prefix is a known verbal prefix (nothing extra)
+	// Valid: dostać (do-), przestać (prze-), powstać (po-), nastać (na-), etc.
+	// Invalid: świstać (świ- is not a prefix), podrastać (podra- is not a prefix)
+	validPrefixes := map[string]bool{
+		"do": true, "na": true, "o": true, "ob": true, "od": true, "ode": true,
+		"po": true, "pod": true, "pode": true, "prze": true, "przy": true,
+		"roz": true, "u": true, "w": true, "wy": true, "z": true, "za": true,
+		"zo": true, "ze": true, "wz": true, "ws": true, "pow": true,
+	}
+
+	if !validPrefixes[prefix] {
+		return PresentTense{}, false
+	}
+
+	// Prefixed -stać verbs use -stanę pattern
+	return PresentTense{
+		Sg1: prefix + "stanę",
+		Sg2: prefix + "staniesz",
+		Sg3: prefix + "stanie",
+		Pl1: prefix + "staniemy",
+		Pl2: prefix + "staniecie",
+		Pl3: prefix + "staną",
+	}, true
+}
+
+// heuristicBiec handles -biec verbs.
+// biec → biegnę, biegniesz, biegnie (g-insertion before n)
+// pobiec → pobiegnę, dobiec → dobiegnę
+func heuristicBiec(infinitive string) (PresentTense, bool) {
+	if !strings.HasSuffix(infinitive, "biec") {
+		return PresentTense{}, false
+	}
+	stem := strings.TrimSuffix(infinitive, "c") // biec → bie-, pobiec → pobie-
+	return PresentTense{
+		Sg1: stem + "gnę",
+		Sg2: stem + "gniesz",
+		Sg3: stem + "gnie",
+		Pl1: stem + "gniemy",
+		Pl2: stem + "gniecie",
+		Pl3: stem + "gną",
+	}, true
+}
+
+// heuristicSlac handles -słać verbs (to spread/make a bed).
+// słać → ścielę, ścielesz, ściele (suppletive stem ściel-)
+// posłać → pościelę, wysłać → wyścielę, rozsłać → rozścielę
+func heuristicSlac(infinitive string) (PresentTense, bool) {
+	if !strings.HasSuffix(infinitive, "słać") {
+		return PresentTense{}, false
+	}
+	prefix := strings.TrimSuffix(infinitive, "słać")
+	return PresentTense{
+		Sg1: prefix + "ścielę",
+		Sg2: prefix + "ścielesz",
+		Sg3: prefix + "ściele",
+		Pl1: prefix + "ścielemy",
+		Pl2: prefix + "ścielecie",
+		Pl3: prefix + "ścielą",
+	}, true
+}
+
+// heuristicTrzec handles -trzeć and -drzeć verbs.
+// trzeć → trę, trzesz, trze (z drops)
+// drzeć → drę, dresz, drze (z drops)
+// zetrzeć → zetrę, podrzeć → podrę
+func heuristicTrzec(infinitive string) (PresentTense, bool) {
+	if strings.HasSuffix(infinitive, "trzeć") {
+		prefix := strings.TrimSuffix(infinitive, "trzeć")
+		return PresentTense{
+			Sg1: prefix + "trę",
+			Sg2: prefix + "trzesz",
+			Sg3: prefix + "trze",
+			Pl1: prefix + "trzemy",
+			Pl2: prefix + "trzecie",
+			Pl3: prefix + "trą",
+		}, true
+	}
+	if strings.HasSuffix(infinitive, "drzeć") {
+		prefix := strings.TrimSuffix(infinitive, "drzeć")
+		return PresentTense{
+			Sg1: prefix + "drę",
+			Sg2: prefix + "drzesz",
+			Sg3: prefix + "drze",
+			Pl1: prefix + "drzemy",
+			Pl2: prefix + "drzecie",
+			Pl3: prefix + "drą",
+		}, true
+	}
+	return PresentTense{}, false
+}
+
 // heuristicSc handles -ść and -źć verbs.
 // nieść → niosę, niesiesz, niesie...
 // wieźć → wiozę, wieziesz, wiezie...
 // gryźć → gryzę, gryziesz, gryzie...
 func heuristicSc(infinitive string) (PresentTense, bool) {
+	// -mieść verbs: ie→io, ś→t in 1sg/3pl, ś→c elsewhere
+	// mieść → miotę, mieciesz, miecie
+	if strings.HasSuffix(infinitive, "mieść") {
+		stem := strings.TrimSuffix(infinitive, "ieść") // keeps 'm'
+		return PresentTense{
+			Sg1: stem + "iotę",
+			Sg2: stem + "ieciesz",
+			Sg3: stem + "iecie",
+			Pl1: stem + "ieciemy",
+			Pl2: stem + "ieciecie",
+			Pl3: stem + "iotą",
+		}, true
+	}
+	// -gnieść verbs: ie→io, ś→t in 1sg/3pl, ś→c elsewhere
+	// gnieść → gniotę, gnieciesz, gniecie
+	if strings.HasSuffix(infinitive, "gnieść") {
+		stem := strings.TrimSuffix(infinitive, "ieść") // keeps 'gn'
+		return PresentTense{
+			Sg1: stem + "iotę",
+			Sg2: stem + "ieciesz",
+			Sg3: stem + "iecie",
+			Pl1: stem + "ieciemy",
+			Pl2: stem + "ieciecie",
+			Pl3: stem + "iotą",
+		}, true
+	}
+	// -wieść verbs: ie→io, ś→d (special case before general -ieść)
+	// wieść → wiodę, przewieść → przewiodę, zawieść → zawiodę
+	if strings.HasSuffix(infinitive, "wieść") {
+		stem := strings.TrimSuffix(infinitive, "ieść") // keeps 'w'
+		return PresentTense{
+			Sg1: stem + "iodę",
+			Sg2: stem + "iedziesz",
+			Sg3: stem + "iedzie",
+			Pl1: stem + "iedziemy",
+			Pl2: stem + "iedziecie",
+			Pl3: stem + "iodą",
+		}, true
+	}
 	// -ieść verbs (nieść type): ie→io alternation in 1sg/3pl
 	if strings.HasSuffix(infinitive, "ieść") {
 		stem := strings.TrimSuffix(infinitive, "ieść")
