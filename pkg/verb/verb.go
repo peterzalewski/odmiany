@@ -140,18 +140,9 @@ func heuristicYwacIwac(infinitive string) (PresentTense, bool) {
 		return PresentTense{}, false
 	}
 
-	// Exceptions that conjugate as -am/-asz instead of -uję
-	// These are typically verbs where -ywać is part of the root, not a suffix
-	exceptions := map[string]bool{
-		"bywać": true, "pływać": true, "przebywać": true,
-		"dobywać": true, "nabywać": true, "odbywać": true,
-		"pobywać": true, "ubywać": true, "wybywać": true,
-		"zbywać": true, "obywać": true, "zabywać": true,
-		"odzywać": true, "przyzywać": true, "wzywać": true,
-		"zażywać": true, "używać": true, "nadużywać": true,
-	}
-	if exceptions[infinitive] {
-		// These follow regular -ać pattern
+	// Check if this verb conjugates as -wam/-wasz (not -uję)
+	// Pattern-based: certain stem endings indicate -wam conjugation
+	if usesYwacWamPattern(infinitive, stem) {
 		fullStem := strings.TrimSuffix(infinitive, "ć")
 		return PresentTense{
 			Sg1: fullStem + "m",
@@ -172,6 +163,155 @@ func heuristicYwacIwac(infinitive string) (PresentTense, bool) {
 		Pl2: stem + "ujecie",
 		Pl3: stem + "ują",
 	}, true
+}
+
+// usesYwacWamPattern determines if a -ywać verb conjugates as -wam/-wasz
+// instead of the standard -uję/-ujesz pattern.
+// The key insight: verbs derived from monosyllabic roots (być→bywać, myć→mywać,
+// żyć→żywać, pływać, szyć→szywać) use -wam, while verbs with -ywać as a
+// derivational suffix (pokazywać from pokazać) use -uję.
+func usesYwacWamPattern(infinitive, stem string) bool {
+	// -bywać: check if it's a prefixed form of bywać (from być)
+	// e.g., odbywać, przebywać, zdobywać → -wam
+	// but udziobywać (from dziobać), odrąbywać (from rąbać) → -uję
+	if strings.HasSuffix(infinitive, "bywać") {
+		if isPrefixedBywac(infinitive) {
+			return true
+		}
+		return false
+	}
+
+	// -mywać: check if it's from myć (umywać, wymywać, obmywać)
+	// but zatrzymywać, ułamywać (from trzymać, łamać) → -uję
+	if strings.HasSuffix(infinitive, "mywać") {
+		if isPrefixedMywac(infinitive) {
+			return true
+		}
+		return false
+	}
+
+	// -rywać: check if it's from rwać/grać/kryć (zrywać, grywać, krywać)
+	// but patrywać, orywać (from patrzeć, orać) → -uję
+	if strings.HasSuffix(infinitive, "rywać") {
+		if isPrefixedRywac(infinitive) {
+			return true
+		}
+		return false
+	}
+
+	// -ływać: from pływać → always -wam
+	if strings.HasSuffix(infinitive, "ływać") {
+		return true
+	}
+
+	// -żywać: from żyć → always -wam (używać, zażywać, nadużywać)
+	if strings.HasSuffix(infinitive, "żywać") {
+		return true
+	}
+
+	// -czywać: from -czyć roots → always -wam (odpoczywać)
+	if strings.HasSuffix(infinitive, "czywać") {
+		return true
+	}
+
+	// -szywać: from szyć → always -wam (doszywać, przeszywać)
+	if strings.HasSuffix(infinitive, "szywać") {
+		return true
+	}
+
+	// -zywać: wzywać, odzywać from zew/zyw root → -wam
+	// but związywać, okazywać, etc. → -uję
+	if strings.HasSuffix(infinitive, "zywać") {
+		// Only simple prefixes + zywać go to -wam
+		if isPrefixedZywac(infinitive) {
+			return true
+		}
+		return false
+	}
+
+	return false
+}
+
+// Common verbal prefixes in Polish
+var verbalPrefixes = []string{
+	"prze", "przy", "po", "pod", "podo", "od", "ode", "do", "za", "na", "nad", "nade",
+	"u", "w", "we", "wy", "z", "ze", "s", "roz", "roze", "o", "ob", "obe",
+}
+
+// isPrefixedBywac checks if the verb is (prefixes) + bywać from być
+func isPrefixedBywac(infinitive string) bool {
+	base := strings.TrimSuffix(infinitive, "bywać")
+	if base == "" {
+		return true // bywać itself
+	}
+	// Strip prefixes repeatedly
+	return canStripAllPrefixes(base)
+}
+
+// isPrefixedMywac checks if the verb is (prefixes) + mywać from myć
+func isPrefixedMywac(infinitive string) bool {
+	// mywać derivatives: [prefix]mywać (umywać, wymywać, obmywać, podmywać)
+	// NOT zatrzymywać, wstrzymywać (from trzymać), ułamywać (from łamać)
+	base := strings.TrimSuffix(infinitive, "mywać")
+	if base == "" {
+		return true // mywać itself
+	}
+	// If there's content before mywać, it should only be prefixes
+	// trzymywać, łamywać patterns have content that's not just prefixes
+	return canStripAllPrefixes(base)
+}
+
+// isPrefixedRywac checks if the verb is (prefixes) + rywać/grywać/krywać/srywać
+func isPrefixedRywac(infinitive string) bool {
+	// From rwać: zrywać, odrywać, porywać, urywać, wyrywać, etc.
+	// From grać: grywać, zagrywać, rozgrywać, etc.
+	// From kryć: krywać, ukrywać, odkrywać, etc.
+	// From srać: srywać, zasrywać, etc. (vulgar)
+	// NOT from orać: orywać, zaorywać → -uję
+	// NOT from patrzeć: patrywać, przypatrywać → -uję
+
+	// Check for grywać, krywać, srywać patterns
+	if strings.HasSuffix(infinitive, "grywać") ||
+		strings.HasSuffix(infinitive, "krywać") ||
+		strings.HasSuffix(infinitive, "srywać") ||
+		strings.HasSuffix(infinitive, "drywać") {
+		return true
+	}
+
+	// For plain -rywać, check if it's prefixed rwać
+	base := strings.TrimSuffix(infinitive, "rywać")
+	if base == "" {
+		return true // rywać itself
+	}
+	return canStripAllPrefixes(base)
+}
+
+// isPrefixedZywac checks if the verb is (prefixes) + zywać from zew/zyw
+func isPrefixedZywac(infinitive string) bool {
+	// wzywać, odzywać, przyzywać → -wam
+	// związywać, pokazywać, etc. → -uję
+	base := strings.TrimSuffix(infinitive, "zywać")
+	if base == "" {
+		return true
+	}
+	return canStripAllPrefixes(base)
+}
+
+// canStripAllPrefixes returns true if the string consists only of valid prefixes
+func canStripAllPrefixes(s string) bool {
+	if s == "" {
+		return true
+	}
+	// Try each prefix
+	for _, p := range verbalPrefixes {
+		if strings.HasPrefix(s, p) {
+			rest := strings.TrimPrefix(s, p)
+			if canStripAllPrefixes(rest) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // heuristicAwac handles -awać verbs (not -ować or -ywać).
@@ -203,12 +343,14 @@ func heuristicOtac(infinitive string) (PresentTense, bool) {
 		return PresentTense{}, false
 	}
 	stem := strings.TrimSuffix(infinitive, "tać")
+	// -otać verbs: t→cz in 1sg/3pl, t→c elsewhere
+	// chichotać → chichoczę, chichocesz, chichoce, chichocemy, chichocecie, chichoczą
 	return PresentTense{
 		Sg1: stem + "czę",
-		Sg2: stem + "czesz",
-		Sg3: stem + "cze",
-		Pl1: stem + "czemy",
-		Pl2: stem + "czecie",
+		Sg2: stem + "cesz",
+		Sg3: stem + "ce",
+		Pl1: stem + "cemy",
+		Pl2: stem + "cecie",
 		Pl3: stem + "czą",
 	}, true
 }
@@ -283,19 +425,53 @@ func presentIEIesz(stem string) PresentTense {
 
 // heuristicNac handles -nąć verbs.
 // ciągnąć → ciągnę, ciągniesz, ciągnie, ciągniemy, ciągniecie, ciągną
+// przysnąć → przysnę, przyśniesz, przyśnie (s→ś before front vowels)
 func heuristicNac(infinitive string) (PresentTense, bool) {
 	if !strings.HasSuffix(infinitive, "nąć") {
 		return PresentTense{}, false
 	}
 	stem := strings.TrimSuffix(infinitive, "ąć") // keeps the 'n'
+
+	// For 1sg and 3pl, use hard stem (ends in n)
+	sg1Stem := stem
+	pl3Stem := stem
+
+	// For other forms, soften consonant before 'n' if applicable
+	// sn → śn, zn → źn before front vowels
+	softStem := softenBeforeN(stem)
+
 	return PresentTense{
-		Sg1: stem + "ę",
-		Sg2: stem + "iesz",
-		Sg3: stem + "ie",
-		Pl1: stem + "iemy",
-		Pl2: stem + "iecie",
-		Pl3: stem + "ą",
+		Sg1: sg1Stem + "ę",
+		Sg2: softStem + "iesz",
+		Sg3: softStem + "ie",
+		Pl1: softStem + "iemy",
+		Pl2: softStem + "iecie",
+		Pl3: pl3Stem + "ą",
 	}, true
+}
+
+// softenBeforeN softens consonants before 'n' at end of stem
+// Rules:
+// - sn → śn always
+// - zn → źn only when preceded by front vowel (i, ę)
+//   e.g., grzęznąć → grzęźnie, obliznąć → obliźnie
+//   but pełznąć → pełznie (ł is not a front vowel)
+func softenBeforeN(stem string) string {
+	if strings.HasSuffix(stem, "sn") {
+		return strings.TrimSuffix(stem, "sn") + "śn"
+	}
+	// For zn, check if preceded by front vowel
+	if strings.HasSuffix(stem, "zn") {
+		runes := []rune(stem)
+		if len(runes) >= 3 {
+			vowelBefore := runes[len(runes)-3]
+			// Front vowels that trigger softening: i, ę
+			if vowelBefore == 'i' || vowelBefore == 'ę' {
+				return strings.TrimSuffix(stem, "zn") + "źn"
+			}
+		}
+	}
+	return stem
 }
 
 // heuristicSc handles -ść and -źć verbs.
@@ -422,17 +598,23 @@ func heuristicIc(infinitive string) (PresentTense, bool) {
 		}, true
 	}
 
-	// Determine 1sg form based on stem-final consonant
-	var sg1 string
+	// Determine 1sg and 3pl forms based on stem-final consonant
+	// Both 1sg and 3pl undergo softening in Polish -ić verbs
+	var sg1, pl3 string
 	if softStem, ok := applySoftening(stem); ok {
-		// Stem ends in consonant that softens: nosić → noszę
+		// Stem ends in consonant that softens: nosić → noszę, noszą
+		// gościć → goszczę, goszczą
 		sg1 = softStem + "ę"
-	} else if endsInSoftConsonant(stem) {
-		// Stem already ends in soft consonant: chodzić → chodzę
+		pl3 = softStem + "ą"
+	} else if endsInSoftConsonant(stem) || endsInNonSoftenableC(stem) {
+		// Stem already ends in soft consonant: chodzić → chodzę, chodzą
+		// Or ends in c (non-softenable): cucić → cucę, kształcić → kształcę
 		sg1 = stem + "ę"
+		pl3 = stem + "ą"
 	} else {
-		// No softening needed: robić → robię
+		// No softening needed: robić → robię, robią
 		sg1 = stem + "ię"
+		pl3 = stem + "ią"
 	}
 
 	return PresentTense{
@@ -441,7 +623,7 @@ func heuristicIc(infinitive string) (PresentTense, bool) {
 		Sg3: stem + "i",
 		Pl1: stem + "imy",
 		Pl2: stem + "icie",
-		Pl3: stem + "ią",
+		Pl3: pl3,
 	}, true
 }
 
@@ -618,12 +800,31 @@ func endsInSoftConsonant(stem string) bool {
 	return false
 }
 
+// endsInNonSoftenableC returns true if stem ends in c that doesn't undergo softening.
+// In Polish -ić verbs, stems ending in c take -ę (not -ię), unless the c is part
+// of a softenable cluster like śc → szcz.
+// Examples: cucić → cucę, kształcić → kształcę, but gościć → goszczę (via śc→szcz)
+func endsInNonSoftenableC(stem string) bool {
+	if !strings.HasSuffix(stem, "c") {
+		return false
+	}
+	// Check if this c is part of a softenable pattern
+	// śc → szcz is handled by applySoftening
+	if strings.HasSuffix(stem, "śc") || strings.HasSuffix(stem, "źc") {
+		return false // these go through applySoftening
+	}
+	return true
+}
+
 // hardeningMap maps hard consonants to their soft alternates.
 // Used for consonant alternations before front vowels (ę, e, i).
 var softeningMap = map[string]string{
+	"śc": "szcz", // gościć → goszczę, czyścić → czyszczę (stem is gośc-, not gość-)
+	"źc": "żdż",  // rare - if it exists
 	"st": "szcz", // prosty → proszę (when applicable)
 	"s":  "sz",   // nosić → noszę
 	"z":  "ż",    // wozić → wożę
+	"ź":  "ż",    // woźić → wożę (rare but exists)
 	"d":  "dz",   // chodzić → chodzę (but stem is already chodz-)
 	"t":  "c",    // płacić → płacę
 	"ch": "sz",   // słuchać → słyszę (rare in verbs)
@@ -639,8 +840,21 @@ var softeningMap = map[string]string{
 // applySoftening attempts to soften the final consonant of a stem.
 // Returns (softened stem, true) if softening applies, (_, false) otherwise.
 func applySoftening(stem string) (string, bool) {
+	// If stem already ends in a soft consonant, no softening needed
+	if endsInSoftConsonant(stem) {
+		return "", false
+	}
+
+	// Check if the stem ends in a soft consonant + n cluster (like czn, żn, szn)
+	// These should not be softened - the n is part of a soft cluster
+	for _, soft := range []string{"cz", "sz", "ż", "rz", "dz"} {
+		if strings.HasSuffix(stem, soft+"n") {
+			return "", false
+		}
+	}
+
 	// Try longer patterns first
-	patterns := []string{"st", "sł", "zł", "sn", "zn", "ch"}
+	patterns := []string{"śc", "źc", "st", "sł", "zł", "sn", "zn", "ch"}
 	for _, p := range patterns {
 		if strings.HasSuffix(stem, p) {
 			if soft, ok := softeningMap[p]; ok {
@@ -650,7 +864,7 @@ func applySoftening(stem string) (string, bool) {
 	}
 
 	// Try single consonants
-	singles := []string{"s", "z", "d", "t", "k", "g", "r"}
+	singles := []string{"s", "z", "ź", "d", "t", "k", "g", "r"}
 	for _, p := range singles {
 		if strings.HasSuffix(stem, p) {
 			if soft, ok := softeningMap[p]; ok {
