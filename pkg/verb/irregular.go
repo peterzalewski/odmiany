@@ -88,6 +88,108 @@ var homographs = map[string][]Paradigm{
 			Gloss: "to gulp/slurp (variant)",
 		},
 	},
+	// ziajać: both -am and -ę patterns attested
+	"ziajać": {
+		{
+			PresentTense: PresentTense{
+				Sg1: "ziajam", Sg2: "ziajasz", Sg3: "ziaja",
+				Pl1: "ziajamy", Pl2: "ziajacie", Pl3: "ziajają",
+			},
+			Gloss: "to pant/gasp",
+		},
+		{
+			PresentTense: PresentTense{
+				Sg1: "ziaję", Sg2: "ziajesz", Sg3: "ziaje",
+				Pl1: "ziajemy", Pl2: "ziajecie", Pl3: "ziają",
+			},
+			Gloss: "to pant/gasp (variant)",
+		},
+	},
+	// bajać: both -am and -ę patterns attested
+	"bajać": {
+		{
+			PresentTense: PresentTense{
+				Sg1: "bajam", Sg2: "bajasz", Sg3: "baja",
+				Pl1: "bajamy", Pl2: "bajacie", Pl3: "bajają",
+			},
+			Gloss: "to tell fairy tales",
+		},
+		{
+			PresentTense: PresentTense{
+				Sg1: "baję", Sg2: "bajesz", Sg3: "baje",
+				Pl1: "bajemy", Pl2: "bajecie", Pl3: "bają",
+			},
+			Gloss: "to tell fairy tales (variant)",
+		},
+	},
+	// przytajać: both -am and -ę patterns attested
+	"przytajać": {
+		{
+			PresentTense: PresentTense{
+				Sg1: "przytajam", Sg2: "przytajasz", Sg3: "przytaja",
+				Pl1: "przytajamy", Pl2: "przytajacie", Pl3: "przytajają",
+			},
+			Gloss: "to crouch/hide",
+		},
+		{
+			PresentTense: PresentTense{
+				Sg1: "przytaję", Sg2: "przytajesz", Sg3: "przytaje",
+				Pl1: "przytajemy", Pl2: "przytajecie", Pl3: "przytają",
+			},
+			Gloss: "to crouch/hide (variant)",
+		},
+	},
+	// kaszliwać: both -iwuję and -uję patterns attested
+	"kaszliwać": {
+		{
+			PresentTense: PresentTense{
+				Sg1: "kaszliwuję", Sg2: "kaszliwujesz", Sg3: "kaszliwuje",
+				Pl1: "kaszliwujemy", Pl2: "kaszliwujecie", Pl3: "kaszliwują",
+			},
+			Gloss: "to cough (frequentative)",
+		},
+		{
+			PresentTense: PresentTense{
+				Sg1: "kaszluję", Sg2: "kaszlujesz", Sg3: "kaszluje",
+				Pl1: "kaszlujemy", Pl2: "kaszlujecie", Pl3: "kaszlują",
+			},
+			Gloss: "to cough (frequentative, variant)",
+		},
+	},
+	// połajać: both -am and -ę patterns attested (different from other łajać prefixes)
+	"połajać": {
+		{
+			PresentTense: PresentTense{
+				Sg1: "połajam", Sg2: "połajasz", Sg3: "połaja",
+				Pl1: "połajamy", Pl2: "połajacie", Pl3: "połajają",
+			},
+			Gloss: "to scold",
+		},
+		{
+			PresentTense: PresentTense{
+				Sg1: "połaję", Sg2: "połajesz", Sg3: "połaje",
+				Pl1: "połajemy", Pl2: "połajecie", Pl3: "połają",
+			},
+			Gloss: "to scold (variant)",
+		},
+	},
+	// pyskiwać: both -iwuję and -uję patterns attested
+	"pyskiwać": {
+		{
+			PresentTense: PresentTense{
+				Sg1: "pyskiwuję", Sg2: "pyskiwujesz", Sg3: "pyskiwuje",
+				Pl1: "pyskiwujemy", Pl2: "pyskiwujecie", Pl3: "pyskiwują",
+			},
+			Gloss: "to talk back",
+		},
+		{
+			PresentTense: PresentTense{
+				Sg1: "pyskuję", Sg2: "pyskujesz", Sg3: "pyskuje",
+				Pl1: "pyskujemy", Pl2: "pyskujecie", Pl3: "pyskują",
+			},
+			Gloss: "to talk back (variant)",
+		},
+	},
 }
 
 // lookupHomograph returns all paradigms for a homograph verb.
@@ -99,14 +201,18 @@ func lookupHomograph(infinitive string) ([]Paradigm, bool) {
 		return paradigms, true
 	}
 
-	// Only słać and chlać support prefix expansion for homographs
-	// because their prefixed forms retain both conjugation patterns.
+	// These homographs support prefix expansion because their
+	// prefixed forms retain both conjugation patterns.
 	// stać prefixed forms like "dostać" are NOT homographs.
+	expandableHomographs := map[string]bool{
+		"słać": true, "chlać": true, "ziajać": true, "bajać": true,
+		"przytajać": true, "kaszliwać": true, "pyskiwać": true,
+	}
 	for _, prefix := range verbPrefixes {
 		if len(infinitive) > len(prefix) && infinitive[:len(prefix)] == prefix {
 			base := infinitive[len(prefix):]
-			// Expand słać and chlać homographs
-			if base == "słać" || base == "chlać" {
+			// Expand homographs that support prefix expansion
+			if expandableHomographs[base] {
 				if baseParadigms, ok := homographs[base]; ok {
 					// Apply prefix to all paradigms
 					result := make([]Paradigm, len(baseParadigms))
@@ -1003,9 +1109,280 @@ var irregularVerbs = map[string]PresentTense{
 		Sg1: "zatajam", Sg2: "zatajasz", Sg3: "zataja",
 		Pl1: "zatajamy", Pl2: "zatajacie", Pl3: "zatajają",
 	},
-	"przytajać": {
-		Sg1: "przytajam", Sg2: "przytajasz", Sg3: "przytaja",
-		Pl1: "przytajamy", Pl2: "przytajacie", Pl3: "przytajają",
+	// przytajać is a homograph (see homographs map)
+
+	// zaniedbać - regular -am (not alternating like other -bać)
+	"zaniedbać": {
+		Sg1: "zaniedbam", Sg2: "zaniedbasz", Sg3: "zaniedba",
+		Pl1: "zaniedbamy", Pl2: "zaniedbacie", Pl3: "zaniedbają",
+	},
+
+	// łajać - minority -ajać that uses -ę/-esz pattern (like krajać)
+	"łajać": {
+		Sg1: "łaję", Sg2: "łajesz", Sg3: "łaje",
+		Pl1: "łajemy", Pl2: "łajecie", Pl3: "łają",
+	},
+
+	// bajać is a homograph (see homographs map)
+
+	// knajać - uses -ę/-esz pattern
+	"knajać": {
+		Sg1: "knaję", Sg2: "knajesz", Sg3: "knaje",
+		Pl1: "knajemy", Pl2: "knajecie", Pl3: "knają",
+	},
+
+	// pierdzieć - action verb (pierdzę not pierdzieję)
+	"pierdzieć": {
+		Sg1: "pierdzę", Sg2: "pierdzisz", Sg3: "pierdzi",
+		Pl1: "pierdzimy", Pl2: "pierdzicie", Pl3: "pierdzą",
+	},
+
+	// skomleć - action verb (skomlę not skomleję)
+	"skomleć": {
+		Sg1: "skomlę", Sg2: "skomlisz", Sg3: "skomli",
+		Pl1: "skomlimy", Pl2: "skomlicie", Pl3: "skomlą",
+	},
+
+	// strzeliwać - uses -iwuję pattern (not -uję)
+	"strzeliwać": {
+		Sg1: "strzeliwuję", Sg2: "strzeliwujesz", Sg3: "strzeliwuje",
+		Pl1: "strzeliwujemy", Pl2: "strzeliwujecie", Pl3: "strzeliwują",
+	},
+
+	// myśliwać - uses -iwuję pattern (not -uję)
+	"myśliwać": {
+		Sg1: "myśliwuję", Sg2: "myśliwujesz", Sg3: "myśliwuje",
+		Pl1: "myśliwujemy", Pl2: "myśliwujecie", Pl3: "myśliwują",
+	},
+
+	// boliwać - uses -iwuję pattern
+	"boliwać": {
+		Sg1: "boliwuję", Sg2: "boliwujesz", Sg3: "boliwuje",
+		Pl1: "boliwujemy", Pl2: "boliwujecie", Pl3: "boliwują",
+	},
+
+	// mgliwać - uses -iwuję pattern
+	"mgliwać": {
+		Sg1: "mgliwuję", Sg2: "mgliwujesz", Sg3: "mgliwuje",
+		Pl1: "mgliwujemy", Pl2: "mgliwujecie", Pl3: "mgliwują",
+	},
+
+	// skuliwać - uses -iwuję pattern
+	"skuliwać": {
+		Sg1: "skuliwuję", Sg2: "skuliwujesz", Sg3: "skuliwuje",
+		Pl1: "skuliwujemy", Pl2: "skuliwujecie", Pl3: "skuliwują",
+	},
+
+	// kpać - regular -am (not -ię)
+	"kpać": {
+		Sg1: "kpam", Sg2: "kpasz", Sg3: "kpa",
+		Pl1: "kpamy", Pl2: "kpacie", Pl3: "kpają",
+	},
+
+	// tlić - no j-insertion (tlę not tliję)
+	"tlić": {
+		Sg1: "tlę", Sg2: "tlisz", Sg3: "tli",
+		Pl1: "tlimy", Pl2: "tlicie", Pl3: "tlą",
+	},
+
+	// clić - no j-insertion (clę not cliję)
+	"clić": {
+		Sg1: "clę", Sg2: "clisz", Sg3: "cli",
+		Pl1: "climy", Pl2: "clicie", Pl3: "clą",
+	},
+
+	// dlić - no j-insertion (used in podlić)
+	"dlić": {
+		Sg1: "dlę", Sg2: "dlisz", Sg3: "dli",
+		Pl1: "dlimy", Pl2: "dlicie", Pl3: "dlą",
+	},
+
+	// kasłać - regular -am (not ściel- alternation)
+	"kasłać": {
+		Sg1: "kasłam", Sg2: "kasłasz", Sg3: "kasła",
+		Pl1: "kasłamy", Pl2: "kasłacie", Pl3: "kasłają",
+	},
+
+	// mieszywać - uses -uję pattern (not -ywam)
+	"mieszywać": {
+		Sg1: "mieszuję", Sg2: "mieszujesz", Sg3: "mieszuje",
+		Pl1: "mieszujemy", Pl2: "mieszujecie", Pl3: "mieszują",
+	},
+
+	// supływać - uses -uję pattern (not -ywam)
+	"supływać": {
+		Sg1: "supłuję", Sg2: "supłujesz", Sg3: "supłuje",
+		Pl1: "supłujemy", Pl2: "supłujecie", Pl3: "supłują",
+	},
+
+	// bazgrywać - uses -uję pattern (not -ywam)
+	"bazgrywać": {
+		Sg1: "bazgruję", Sg2: "bazgrujesz", Sg3: "bazgruje",
+		Pl1: "bazgrujemy", Pl2: "bazgrujecie", Pl3: "bazgrują",
+	},
+
+	// podobywać - uses -uję pattern
+	"podobywać": {
+		Sg1: "podobuję", Sg2: "podobujesz", Sg3: "podobuje",
+		Pl1: "podobujemy", Pl2: "podobujecie", Pl3: "podobują",
+	},
+
+	// cierpać - regular -am (pocierpać)
+	"cierpać": {
+		Sg1: "cierpam", Sg2: "cierpasz", Sg3: "cierpa",
+		Pl1: "cierpamy", Pl2: "cierpacie", Pl3: "cierpają",
+	},
+
+	// siąpać - regular -am (not -ię)
+	"siąpać": {
+		Sg1: "siąpam", Sg2: "siąpasz", Sg3: "siąpa",
+		Pl1: "siąpamy", Pl2: "siąpacie", Pl3: "siąpają",
+	},
+
+	// tyrpać - regular -am (not -ię)
+	"tyrpać": {
+		Sg1: "tyrpam", Sg2: "tyrpasz", Sg3: "tyrpa",
+		Pl1: "tyrpamy", Pl2: "tyrpacie", Pl3: "tyrpają",
+	},
+
+	// ściubać - regular -am (not -ię)
+	"ściubać": {
+		Sg1: "ściubam", Sg2: "ściubasz", Sg3: "ściuba",
+		Pl1: "ściubamy", Pl2: "ściubacie", Pl3: "ściubają",
+	},
+
+	// ślipać - regular -am (not -ię)
+	"ślipać": {
+		Sg1: "ślipam", Sg2: "ślipasz", Sg3: "ślipa",
+		Pl1: "ślipamy", Pl2: "ślipacie", Pl3: "ślipają",
+	},
+
+	// bombać - regular -am (nabombać)
+	"bombać": {
+		Sg1: "bombam", Sg2: "bombasz", Sg3: "bomba",
+		Pl1: "bombamy", Pl2: "bombacie", Pl3: "bombają",
+	},
+
+	// Inchoative -eć verbs that use -eję pattern
+	// doźrzeć - to ripen (inchoative)
+	"doźrzeć": {
+		Sg1: "doźrzeję", Sg2: "doźrzejesz", Sg3: "doźrzeje",
+		Pl1: "doźrzejemy", Pl2: "doźrzejecie", Pl3: "doźrzeją",
+	},
+	// ochujeć - vulgar, to become stupid
+	"ochujeć": {
+		Sg1: "ochujeję", Sg2: "ochujejesz", Sg3: "ochujeje",
+		Pl1: "ochujejemy", Pl2: "ochujejecie", Pl3: "ochujeją",
+	},
+	// ociężeć - to become heavy
+	"ociężeć": {
+		Sg1: "ociężeję", Sg2: "ociężejesz", Sg3: "ociężeje",
+		Pl1: "ociężejemy", Pl2: "ociężejecie", Pl3: "ociężeją",
+	},
+	// ściężeć - to become heavy
+	"ściężeć": {
+		Sg1: "ściężeję", Sg2: "ściężejesz", Sg3: "ściężeje",
+		Pl1: "ściężejemy", Pl2: "ściężejecie", Pl3: "ściężeją",
+	},
+	// oszedzieć - to become grey
+	"oszedzieć": {
+		Sg1: "oszedzieję", Sg2: "oszedziejesz", Sg3: "oszedzieje",
+		Pl1: "oszedziejemy", Pl2: "oszedziejecie", Pl3: "oszedzieją",
+	},
+	// szedzieć - base for poszedzieć
+	"szedzieć": {
+		Sg1: "szedzieję", Sg2: "szedziejesz", Sg3: "szedzieje",
+		Pl1: "szedziejemy", Pl2: "szedziejecie", Pl3: "szedzieją",
+	},
+	// sposążeć - to ripen
+	"sposążeć": {
+		Sg1: "sposążeję", Sg2: "sposążejesz", Sg3: "sposążeje",
+		Pl1: "sposążejemy", Pl2: "sposążejecie", Pl3: "sposążeją",
+	},
+	// wyryżeć - to become reddish
+	"wyryżeć": {
+		Sg1: "wyryżeję", Sg2: "wyryżejesz", Sg3: "wyryżeje",
+		Pl1: "wyryżejemy", Pl2: "wyryżejecie", Pl3: "wyryżeją",
+	},
+
+	// dziamdziać - uses -am pattern (not -eję)
+	"dziamdziać": {
+		Sg1: "dziamdziam", Sg2: "dziamdziasz", Sg3: "dziamdzia",
+		Pl1: "dziamdziamy", Pl2: "dziamdziacie", Pl3: "dziamdziają",
+	},
+
+	// -piać verbs: minority -ać that uses -eję pattern (not -am)
+	// Similar to śmiać → śmieję
+	"piać": {
+		Sg1: "pieję", Sg2: "piejesz", Sg3: "pieje",
+		Pl1: "piejemy", Pl2: "piejecie", Pl3: "pieją",
+	},
+	// spiać: base for dospiać, dośpiać, uśpiać
+	"spiać": {
+		Sg1: "spieję", Sg2: "spiejesz", Sg3: "spieje",
+		Pl1: "spiejemy", Pl2: "spiejecie", Pl3: "spieją",
+	},
+
+	// mieć - pomieć uses -am pattern (pomam not pomieję)
+	"pomieć": {
+		Sg1: "pomam", Sg2: "pomasz", Sg3: "poma",
+		Pl1: "pomamy", Pl2: "pomacie", Pl3: "pomają",
+	},
+
+	// sposzyć - j-insertion (sposzyję not sposzę)
+	"sposzyć": {
+		Sg1: "sposzyję", Sg2: "sposzyjesz", Sg3: "sposzyje",
+		Pl1: "sposzyjemy", Pl2: "sposzyjecie", Pl3: "sposzyją",
+	},
+
+	// źreć - inchoative (źrzeję not źrem)
+	"źreć": {
+		Sg1: "źreję", Sg2: "źrejesz", Sg3: "źreje",
+		Pl1: "źrejemy", Pl2: "źrejecie", Pl3: "źreją",
+	},
+	// źrzeć - inchoative
+	"źrzeć": {
+		Sg1: "źrzeję", Sg2: "źrzejesz", Sg3: "źrzeje",
+		Pl1: "źrzejemy", Pl2: "źrzejecie", Pl3: "źrzeją",
+	},
+
+	// połajać is a homograph (see homographs map)
+
+	// kaszliwać is a homograph (see homographs map)
+
+	// pyskiwać is a homograph (see homographs map)
+
+	// ziajać is a homograph (see homographs map)
+
+	// oziać - uses -eję pattern (like śmiać → śmieję)
+	"oziać": {
+		Sg1: "ozieję", Sg2: "oziejesz", Sg3: "ozieje",
+		Pl1: "oziejemy", Pl2: "oziejecie", Pl3: "ozieją",
+	},
+
+	// przytajać - uses -ę pattern (overrides the -am pattern set for concealment meaning)
+	// Different meaning: "to crouch/hide" vs utajać/zatajać "to conceal"
+	// Note: This entry overrides the earlier przytajać entry
+	// We need to remove from earlier list if duplicate
+
+	// Compound prefix -strzeliwać verbs that don't match simple prefix expansion
+	"porozstrzeliwać": {
+		Sg1: "porozstrzeliwuję", Sg2: "porozstrzeliwujesz", Sg3: "porozstrzeliwuje",
+		Pl1: "porozstrzeliwujemy", Pl2: "porozstrzeliwujecie", Pl3: "porozstrzeliwują",
+	},
+	"powystrzeliwać": {
+		Sg1: "powystrzeliwuję", Sg2: "powystrzeliwujesz", Sg3: "powystrzeliwuje",
+		Pl1: "powystrzeliwujemy", Pl2: "powystrzeliwujecie", Pl3: "powystrzeliwują",
+	},
+
+	// dośpiać/uśpiać - need -eję pattern
+	"dośpiać": {
+		Sg1: "dośpieję", Sg2: "dośpiejesz", Sg3: "dośpieje",
+		Pl1: "dośpiejemy", Pl2: "dośpiejecie", Pl3: "dośpieją",
+	},
+	"uśpiać": {
+		Sg1: "uśpieję", Sg2: "uśpiejesz", Sg3: "uśpieje",
+		Pl1: "uśpiejemy", Pl2: "uśpiejecie", Pl3: "uśpieją",
 	},
 }
 
@@ -1085,6 +1462,16 @@ func lookupIrregularWithPrefix(infinitive string) (PresentTense, bool) {
 		// Inchoative -eć verbs
 		"chorzeć": true, "tężeć": true, "dumieć": true, "goreć": true,
 		"śniedzieć": true, "srebrzeć": true, "cukrzeć": true,
+		// Additional prefixable bases
+		"łajać": true, "bajać": true, "pierdzieć": true, "skomleć": true,
+		"strzeliwać": true, "myśliwać": true, "boliwać": true, "mgliwać": true,
+		"kpać": true, "tlić": true, "clić": true, "dlić": true,
+		"kasłać": true, "mieszywać": true, "supływać": true, "bazgrywać": true,
+		"podobywać": true, "cierpać": true, "siąpać": true, "tyrpać": true,
+		"ściubać": true, "ślipać": true, "bombać": true,
+		"szedzieć": true, "piać": true, "spiać": true, "skuliwać": true,
+		"kaszliwać": true, "pyskiwać": true, "ziajać": true,
+		"śmierdzieć": true,
 	}
 
 	for _, prefix := range verbPrefixes {
