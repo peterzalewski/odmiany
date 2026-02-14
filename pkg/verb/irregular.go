@@ -71,6 +71,23 @@ var homographs = map[string][]Paradigm{
 			Gloss: "to keep standing/stopping (variant)",
 		},
 	},
+	// chlać: vulgar "to gulp" (both patterns attested)
+	"chlać": {
+		{
+			PresentTense: PresentTense{
+				Sg1: "chlam", Sg2: "chlasz", Sg3: "chla",
+				Pl1: "chlamy", Pl2: "chlacie", Pl3: "chlają",
+			},
+			Gloss: "to gulp/slurp (vulgar)",
+		},
+		{
+			PresentTense: PresentTense{
+				Sg1: "chleję", Sg2: "chlejesz", Sg3: "chleje",
+				Pl1: "chlejemy", Pl2: "chlejecie", Pl3: "chleją",
+			},
+			Gloss: "to gulp/slurp (variant)",
+		},
+	},
 }
 
 // lookupHomograph returns all paradigms for a homograph verb.
@@ -82,14 +99,14 @@ func lookupHomograph(infinitive string) ([]Paradigm, bool) {
 		return paradigms, true
 	}
 
-	// Only słać (not stać) supports prefix expansion for homographs
-	// because prefixed słać forms (wysłać, posłać) can mean either
-	// "to send" or "to spread (bedding)".
+	// Only słać and chlać support prefix expansion for homographs
+	// because their prefixed forms retain both conjugation patterns.
+	// stać prefixed forms like "dostać" are NOT homographs.
 	for _, prefix := range verbPrefixes {
 		if len(infinitive) > len(prefix) && infinitive[:len(prefix)] == prefix {
 			base := infinitive[len(prefix):]
-			// Only expand słać homographs - stać prefixed forms aren't homographs
-			if base == "słać" {
+			// Expand słać and chlać homographs
+			if base == "słać" || base == "chlać" {
 				if baseParadigms, ok := homographs[base]; ok {
 					// Apply prefix to all paradigms
 					result := make([]Paradigm, len(baseParadigms))
@@ -826,6 +843,36 @@ var irregularVerbs = map[string]PresentTense{
 		Pl1: "chybamy", Pl2: "chybacie", Pl3: "chybają",
 	},
 
+	// gibać - regular -am
+	"gibać": {
+		Sg1: "gibam", Sg2: "gibasz", Sg3: "giba",
+		Pl1: "gibamy", Pl2: "gibacie", Pl3: "gibają",
+	},
+
+	// siorbać - regular -am (to slurp)
+	"siorbać": {
+		Sg1: "siorbam", Sg2: "siorbasz", Sg3: "siorba",
+		Pl1: "siorbamy", Pl2: "siorbacie", Pl3: "siorbają",
+	},
+
+	// stąpać - regular -am (to step)
+	"stąpać": {
+		Sg1: "stąpam", Sg2: "stąpasz", Sg3: "stąpa",
+		Pl1: "stąpamy", Pl2: "stąpacie", Pl3: "stąpają",
+	},
+
+	// pchlać - related to pchła (flea), not chlać
+	"pchlać": {
+		Sg1: "pchlam", Sg2: "pchlasz", Sg3: "pchla",
+		Pl1: "pchlamy", Pl2: "pchlacie", Pl3: "pchlają",
+	},
+
+	// rychlać - not related to chlać
+	"rychlać": {
+		Sg1: "rychlam", Sg2: "rychlasz", Sg3: "rychla",
+		Pl1: "rychlamy", Pl2: "rychlacie", Pl3: "rychlają",
+	},
+
 	// gnić - to rot (j-insertion: gniję)
 	"gnić": {
 		Sg1: "gniję", Sg2: "gnijesz", Sg3: "gnije",
@@ -924,7 +971,8 @@ func lookupIrregularWithPrefix(infinitive string) (PresentTense, bool) {
 		"dojrzeć": true, "boleć": true, "swędzieć": true,
 		"tajać": true, "ćpać": true, "wić": true,
 		"bimbać": true, "gabać": true, "chybać": true, "gnić": true,
-		"siać": true,
+		"siać": true, "gibać": true, "siorbać": true, "stąpać": true,
+		"pchlać": true, "rychlać": true,
 	}
 
 	for _, prefix := range verbPrefixes {
