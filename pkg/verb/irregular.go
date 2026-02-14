@@ -304,6 +304,26 @@ var irregularVerbs = map[string]PresentTense{
 		Sg1: "żyję", Sg2: "żyjesz", Sg3: "żyje",
 		Pl1: "żyjemy", Pl2: "żyjecie", Pl3: "żyją",
 	},
+	// użyć → użyję (zużyć, nadużyć, spożyć, etc.) - same j-insertion as żyć
+	"użyć": {
+		Sg1: "użyję", Sg2: "użyjesz", Sg3: "użyje",
+		Pl1: "użyjemy", Pl2: "użyjecie", Pl3: "użyją",
+	},
+	// spożyć - s+po+żyć, needs direct entry
+	"spożyć": {
+		Sg1: "spożyję", Sg2: "spożyjesz", Sg3: "spożyje",
+		Pl1: "spożyjemy", Pl2: "spożyjecie", Pl3: "spożyją",
+	},
+	// współżyć - współ prefix not in standard list
+	"współżyć": {
+		Sg1: "współżyję", Sg2: "współżyjesz", Sg3: "współżyje",
+		Pl1: "współżyjemy", Pl2: "współżyjecie", Pl3: "współżyją",
+	},
+	// współprzeżyć - compound prefix
+	"współprzeżyć": {
+		Sg1: "współprzeżyję", Sg2: "współprzeżyjesz", Sg3: "współprzeżyje",
+		Pl1: "współprzeżyjemy", Pl2: "współprzeżyjecie", Pl3: "współprzeżyją",
+	},
 	// myć → myję (umyć, wymyć, etc.)
 	"myć": {
 		Sg1: "myję", Sg2: "myjesz", Sg3: "myje",
@@ -879,6 +899,88 @@ var irregularVerbs = map[string]PresentTense{
 		Pl1: "gdybamy", Pl2: "gdybacie", Pl3: "gdybają",
 	},
 
+	// Inchoative -eć verbs (becoming/changing state) use -eję pattern
+	// chorzeć - to become ill
+	"chorzeć": {
+		Sg1: "chorzeję", Sg2: "chorzejesz", Sg3: "chorzeje",
+		Pl1: "chorzejemy", Pl2: "chorzejecie", Pl3: "chorzeją",
+	},
+	// tężeć - to stiffen
+	"tężeć": {
+		Sg1: "tężeję", Sg2: "tężejesz", Sg3: "tężeje",
+		Pl1: "tężejemy", Pl2: "tężejecie", Pl3: "tężeją",
+	},
+	// dumieć - to be amazed
+	"dumieć": {
+		Sg1: "dumieję", Sg2: "dumiejesz", Sg3: "dumieje",
+		Pl1: "dumiejemy", Pl2: "dumiejecie", Pl3: "dumieją",
+	},
+	// goreć - to burn (inchoative)
+	"goreć": {
+		Sg1: "goreję", Sg2: "gorejesz", Sg3: "goreje",
+		Pl1: "gorejemy", Pl2: "gorejecie", Pl3: "goreją",
+	},
+	// śniedzieć - to become verdigris/moldy
+	"śniedzieć": {
+		Sg1: "śniedzieję", Sg2: "śniedziejesz", Sg3: "śniedzieje",
+		Pl1: "śniedziejemy", Pl2: "śniedziejecie", Pl3: "śniedzieją",
+	},
+	// srebrzeć - to become silvery
+	"srebrzeć": {
+		Sg1: "srebrzeję", Sg2: "srebrzejesz", Sg3: "srebrzeje",
+		Pl1: "srebrzejemy", Pl2: "srebrzejecie", Pl3: "srebrzeją",
+	},
+	// cukrzeć - to become sugary
+	"cukrzeć": {
+		Sg1: "cukrzeję", Sg2: "cukrzejesz", Sg3: "cukrzeje",
+		Pl1: "cukrzejemy", Pl2: "cukrzejecie", Pl3: "cukrzeją",
+	},
+	// dorośleć - to mature/grow up
+	"dorośleć": {
+		Sg1: "dorośleję", Sg2: "doroślejesz", Sg3: "dorośleje",
+		Pl1: "doroślejemy", Pl2: "doroślejecie", Pl3: "dorośleją",
+	},
+	// wydorośleć - prefixed form
+	"wydorośleć": {
+		Sg1: "wydorośleję", Sg2: "wydoroślejesz", Sg3: "wydorośleje",
+		Pl1: "wydoroślejemy", Pl2: "wydoroślejecie", Pl3: "wydorośleją",
+	},
+	// przejrzeć - to regain sight (inchoative, not "to look through")
+	"przejrzeć": {
+		Sg1: "przejrzeję", Sg2: "przejrzejesz", Sg3: "przejrzeje",
+		Pl1: "przejrzejemy", Pl2: "przejrzejecie", Pl3: "przejrzeją",
+	},
+	// zelżeć - to ease/lighten
+	"zelżeć": {
+		Sg1: "zelżeję", Sg2: "zelżejesz", Sg3: "zelżeje",
+		Pl1: "zelżejemy", Pl2: "zelżejecie", Pl3: "zelżeją",
+	},
+	// wilżeć - to become moist
+	"wilżeć": {
+		Sg1: "wilżeję", Sg2: "wilżejesz", Sg3: "wilżeje",
+		Pl1: "wilżejemy", Pl2: "wilżejecie", Pl3: "wilżeją",
+	},
+	// wężeć - to narrow
+	"wężeć": {
+		Sg1: "wężeję", Sg2: "wężejesz", Sg3: "wężeje",
+		Pl1: "wężejemy", Pl2: "wężejecie", Pl3: "wężeją",
+	},
+	// rzedzieć - to become sparse
+	"rzedzieć": {
+		Sg1: "rzedzieję", Sg2: "rzedziejesz", Sg3: "rzedzieje",
+		Pl1: "rzedziejemy", Pl2: "rzedziejecie", Pl3: "rzedzieją",
+	},
+	// sfolżeć - to ease
+	"sfolżeć": {
+		Sg1: "sfolżeję", Sg2: "sfolżejesz", Sg3: "sfolżeje",
+		Pl1: "sfolżejemy", Pl2: "sfolżejecie", Pl3: "sfolżeją",
+	},
+	// szlachcieć - to become noble
+	"szlachcieć": {
+		Sg1: "szlachcieję", Sg2: "szlachciejesz", Sg3: "szlachcieje",
+		Pl1: "szlachciejemy", Pl2: "szlachciejecie", Pl3: "szlachcieją",
+	},
+
 	// gnić - to rot (j-insertion: gniję)
 	"gnić": {
 		Sg1: "gniję", Sg2: "gnijesz", Sg3: "gnije",
@@ -979,6 +1081,10 @@ func lookupIrregularWithPrefix(infinitive string) (PresentTense, bool) {
 		"bimbać": true, "gabać": true, "chybać": true, "gnić": true,
 		"siać": true, "gibać": true, "siorbać": true, "stąpać": true,
 		"pchlać": true, "rychlać": true, "gdybać": true,
+		"użyć": true,
+		// Inchoative -eć verbs
+		"chorzeć": true, "tężeć": true, "dumieć": true, "goreć": true,
+		"śniedzieć": true, "srebrzeć": true, "cukrzeć": true,
 	}
 
 	for _, prefix := range verbPrefixes {
