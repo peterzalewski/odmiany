@@ -186,8 +186,8 @@ var irregularVerbs = map[string]PresentTense{
 		Pl1: "czeszemy", Pl2: "czeszecie", Pl3: "czeszą",
 	},
 	"kasać": {
-		Sg1: "kaszę", Sg2: "kaszesz", Sg3: "kasze",
-		Pl1: "kaszemy", Pl2: "kaszecie", Pl3: "kaszą",
+		Sg1: "kasam", Sg2: "kasasz", Sg3: "kasa",
+		Pl1: "kasamy", Pl2: "kasacie", Pl3: "kasają",
 	},
 	"kołysać": {
 		Sg1: "kołyszę", Sg2: "kołyszesz", Sg3: "kołysze",
@@ -198,12 +198,12 @@ var irregularVerbs = map[string]PresentTense{
 		Pl1: "ciosamy", Pl2: "ciosacie", Pl3: "ciosają",
 	},
 	"ciesać": {
-		Sg1: "cieszę", Sg2: "cieszesz", Sg3: "ciesze",
-		Pl1: "cieszemy", Pl2: "cieszecie", Pl3: "cieszą",
+		Sg1: "ciesam", Sg2: "ciesasz", Sg3: "ciesa",
+		Pl1: "ciesamy", Pl2: "ciesacie", Pl3: "ciesają",
 	},
 	"krzesać": {
-		Sg1: "krzeszę", Sg2: "krzeszesz", Sg3: "krzesze",
-		Pl1: "krzeszemy", Pl2: "krzeszecie", Pl3: "krzeszą",
+		Sg1: "krzesam", Sg2: "krzesasz", Sg3: "krzesa",
+		Pl1: "krzesamy", Pl2: "krzesacie", Pl3: "krzesają",
 	},
 	"skakać": {
 		Sg1: "skaczę", Sg2: "skaczesz", Sg3: "skacze",
@@ -311,6 +311,28 @@ var irregularVerbs = map[string]PresentTense{
 	"kryć": {
 		Sg1: "kryję", Sg2: "kryjesz", Sg3: "kryje",
 		Pl1: "kryjemy", Pl2: "kryjecie", Pl3: "kryją",
+	},
+	// wić → wiję (powić, spowić, etc.) - j-insertion
+	"wić": {
+		Sg1: "wiję", Sg2: "wijesz", Sg3: "wije",
+		Pl1: "wijemy", Pl2: "wijecie", Pl3: "wiją",
+	},
+	// Prefixed wić forms that don't match simple prefix patterns
+	"opowić": {
+		Sg1: "opowiję", Sg2: "opowijesz", Sg3: "opowije",
+		Pl1: "opowijemy", Pl2: "opowijecie", Pl3: "opowiją",
+	},
+	"rozpowić": {
+		Sg1: "rozpowiję", Sg2: "rozpowijesz", Sg3: "rozpowije",
+		Pl1: "rozpowijemy", Pl2: "rozpowijecie", Pl3: "rozpowiją",
+	},
+	"spowić": {
+		Sg1: "spowiję", Sg2: "spowijesz", Sg3: "spowije",
+		Pl1: "spowijemy", Pl2: "spowijecie", Pl3: "spowiją",
+	},
+	"upowić": {
+		Sg1: "upowiję", Sg2: "upowijesz", Sg3: "upowije",
+		Pl1: "upowijemy", Pl2: "upowijecie", Pl3: "upowiją",
 	},
 
 	// -pomnieć verbs: zapomnieć → zapomnę (ie drops)
@@ -786,6 +808,24 @@ var irregularVerbs = map[string]PresentTense{
 		Pl1: "ćpamy", Pl2: "ćpacie", Pl3: "ćpają",
 	},
 
+	// bimbać - regular -am (not alternating like other -bać)
+	"bimbać": {
+		Sg1: "bimbam", Sg2: "bimbasz", Sg3: "bimba",
+		Pl1: "bimbamy", Pl2: "bimbacie", Pl3: "bimbają",
+	},
+
+	// gabać - regular -am (not alternating)
+	"gabać": {
+		Sg1: "gabam", Sg2: "gabasz", Sg3: "gaba",
+		Pl1: "gabamy", Pl2: "gabacie", Pl3: "gabają",
+	},
+
+	// chybać - regular -am (pochybać, przychybać, wychybać)
+	"chybać": {
+		Sg1: "chybam", Sg2: "chybasz", Sg3: "chyba",
+		Pl1: "chybamy", Pl2: "chybacie", Pl3: "chybają",
+	},
+
 	// -tajać verbs meaning "to conceal" (from "taja"), use -tajam not -taję
 	// Different from tajać meaning "to thaw" which uses taję
 	"utajać": {
@@ -870,7 +910,8 @@ func lookupIrregularWithPrefix(infinitive string) (PresentTense, bool) {
 		"starzeć": true, "gorzeć": true, "dorzeć": true, "dobrzeć": true,
 		"czcić": true, "kpić": true, "ulec": true, "wściec": true,
 		"dojrzeć": true, "boleć": true, "swędzieć": true,
-		"tajać": true, "ćpać": true,
+		"tajać": true, "ćpać": true, "wić": true,
+		"bimbać": true, "gabać": true, "chybać": true,
 	}
 
 	for _, prefix := range verbPrefixes {
