@@ -873,6 +873,12 @@ var irregularVerbs = map[string]PresentTense{
 		Pl1: "rychlamy", Pl2: "rychlacie", Pl3: "rychlają",
 	},
 
+	// gdybać - regular -am (to speculate)
+	"gdybać": {
+		Sg1: "gdybam", Sg2: "gdybasz", Sg3: "gdyba",
+		Pl1: "gdybamy", Pl2: "gdybacie", Pl3: "gdybają",
+	},
+
 	// gnić - to rot (j-insertion: gniję)
 	"gnić": {
 		Sg1: "gniję", Sg2: "gnijesz", Sg3: "gnije",
@@ -972,7 +978,7 @@ func lookupIrregularWithPrefix(infinitive string) (PresentTense, bool) {
 		"tajać": true, "ćpać": true, "wić": true,
 		"bimbać": true, "gabać": true, "chybać": true, "gnić": true,
 		"siać": true, "gibać": true, "siorbać": true, "stąpać": true,
-		"pchlać": true, "rychlać": true,
+		"pchlać": true, "rychlać": true, "gdybać": true,
 	}
 
 	for _, prefix := range verbPrefixes {
