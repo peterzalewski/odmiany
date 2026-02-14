@@ -36,28 +36,38 @@ func loadCorpus(t *testing.T) []corpusEntry {
 func TestCorpusAccuracy(t *testing.T) {
 	entries := loadCorpus(t)
 
-	var passed, failed, noMatch int
-	failures := make(map[string]int) // pattern -> count
-
+	// Group corpus entries by infinitive to handle variants/homographs
+	byInfinitive := make(map[string][]PresentTense)
 	for _, e := range entries {
-		expected := PresentTense{
+		pt := PresentTense{
 			Sg1: e.Sg1, Sg2: e.Sg2, Sg3: e.Sg3,
 			Pl1: e.Pl1, Pl2: e.Pl2, Pl3: e.Pl3,
 		}
+		byInfinitive[e.Infinitive] = append(byInfinitive[e.Infinitive], pt)
+	}
 
-		paradigms, err := ConjugatePresent(e.Infinitive)
+	var passed, failed, noMatch int
+	failures := make(map[string]int) // pattern -> count
+
+	for infinitive, corpusParadigms := range byInfinitive {
+		paradigms, err := ConjugatePresent(infinitive)
 		if err != nil {
 			noMatch++
-			pattern := classifyFailure(e.Infinitive, "no_match")
+			pattern := classifyFailure(infinitive, "no_match")
 			failures[pattern]++
 			continue
 		}
 
-		// Check if ANY paradigm matches completely
+		// Check if ANY of our paradigms matches ANY corpus paradigm
 		anyMatch := false
-		for _, p := range paradigms {
-			if p.PresentTense.Equals(expected) {
-				anyMatch = true
+		for _, ourP := range paradigms {
+			for _, corpusP := range corpusParadigms {
+				if ourP.PresentTense.Equals(corpusP) {
+					anyMatch = true
+					break
+				}
+			}
+			if anyMatch {
 				break
 			}
 		}
@@ -66,12 +76,12 @@ func TestCorpusAccuracy(t *testing.T) {
 			passed++
 		} else {
 			failed++
-			pattern := classifyFailure(e.Infinitive, describeError(e.Infinitive, expected, paradigms[0].PresentTense))
+			pattern := classifyFailure(infinitive, describeError(infinitive, corpusParadigms[0], paradigms[0].PresentTense))
 			failures[pattern]++
 		}
 	}
 
-	total := len(entries)
+	total := len(byInfinitive)
 	accuracy := float64(passed) / float64(total) * 100
 
 	t.Logf("Corpus accuracy: %.2f%% (%d/%d passed, %d failed, %d no match)",
