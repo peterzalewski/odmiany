@@ -108,6 +108,16 @@ var heuristics = []heuristic{
 	heuristicEptac,
 	// -łamać verbs: łamać → łamię
 	heuristicLamac,
+	// -dziać verbs (dress): odziać → odzieję
+	heuristicDziac,
+	// -chlać verbs: chlać → chleję
+	heuristicChlac,
+	// -iać verbs: siać → sieję
+	heuristicIac,
+	// -grzać verbs: grzać → grzeję
+	heuristicGrzac,
+	// -ssać verbs: ssać → ssę
+	heuristicSsac,
 	// -ać verbs with consonant alternations: pisać → piszę
 	heuristicAcAlternating,
 	// -nąć verbs: ciągnąć → ciągnę
@@ -130,7 +140,9 @@ var heuristics = []heuristic{
 	heuristicBiec,
 	// -słać verbs (send): wysłać → wyślę
 	heuristicSlac,
-	// -trzeć/-drzeć verbs: trzeć → trę
+	// -trzeć inchoative verbs: wietrzeć → wietrzeję (NOT action verbs like trzeć/drzeć)
+	heuristicTrzecInchoative,
+	// -trzeć/-drzeć action verbs: trzeć → trę
 	heuristicTrzec,
 	// -ść/-źć verbs: nieść → niosę
 	heuristicSc,
@@ -237,8 +249,9 @@ func usesYwacWamPattern(infinitive, stem string) bool {
 		return false
 	}
 
-	// -ływać: from pływać → always -wam
-	if strings.HasSuffix(infinitive, "ływać") {
+	// -pływać: from pływać → always -wam
+	// Note: only "pływać" itself, not words like "wywoływać" (from wołać+ywać)
+	if strings.HasSuffix(infinitive, "pływać") {
 		return true
 	}
 
@@ -425,6 +438,108 @@ func heuristicLamac(infinitive string) (PresentTense, bool) {
 		Pl1: stem + "iemy",
 		Pl2: stem + "iecie",
 		Pl3: stem + "ią",
+	}, true
+}
+
+// heuristicDziac handles -dziać verbs (to dress/put on).
+// odziać → odzieję, wdziać → wdzieję, przyodziać → przyodzieję
+// These use a→ie alternation before j, similar to siać/ziać.
+func heuristicDziac(infinitive string) (PresentTense, bool) {
+	if !strings.HasSuffix(infinitive, "dziać") {
+		return PresentTense{}, false
+	}
+	stem := strings.TrimSuffix(infinitive, "iać") // keeps "dz"
+	return PresentTense{
+		Sg1: stem + "ieję",
+		Sg2: stem + "iejesz",
+		Sg3: stem + "ieje",
+		Pl1: stem + "iejemy",
+		Pl2: stem + "iejecie",
+		Pl3: stem + "ieją",
+	}, true
+}
+
+// heuristicChlac handles -chlać verbs (to guzzle/drink heavily).
+// chlać → chleję, schlać → schleję
+// These use a→e alternation before j (unusual for -ać verbs).
+func heuristicChlac(infinitive string) (PresentTense, bool) {
+	if !strings.HasSuffix(infinitive, "chlać") {
+		return PresentTense{}, false
+	}
+	stem := strings.TrimSuffix(infinitive, "ać") // keeps "chl"
+	return PresentTense{
+		Sg1: stem + "eję",
+		Sg2: stem + "ejesz",
+		Sg3: stem + "eje",
+		Pl1: stem + "ejemy",
+		Pl2: stem + "ejecie",
+		Pl3: stem + "eją",
+	}, true
+}
+
+// heuristicIac handles monosyllabic -iać verbs.
+// siać → sieję (to sow), ziać → zieję (to breathe)
+// Most -iać verbs (sypiać, mawiać, nastawiać) use -am and are handled by heuristicAc.
+// Only single-consonant stems use the -ieję pattern.
+func heuristicIac(infinitive string) (PresentTense, bool) {
+	if !strings.HasSuffix(infinitive, "iać") {
+		return PresentTense{}, false
+	}
+	// Get the stem before 'iać'
+	stem := strings.TrimSuffix(infinitive, "iać")
+
+	// Only apply to single consonant stems
+	// siać (stem "s"), ziać (stem "z")
+	// NOT sypiać (stem "syp"), mawiać (stem "maw"), etc.
+	runeCount := len([]rune(stem))
+	if runeCount != 1 {
+		return PresentTense{}, false
+	}
+
+	// The pattern is: ia→ie before j
+	return PresentTense{
+		Sg1: stem + "ieję",
+		Sg2: stem + "iejesz",
+		Sg3: stem + "ieje",
+		Pl1: stem + "iejemy",
+		Pl2: stem + "iejecie",
+		Pl3: stem + "ieją",
+	}, true
+}
+
+// heuristicGrzac handles -grzać verbs.
+// grzać → grzeję, grzejesz, grzeje... (a→e before j)
+// rozgrzać → rozgrzeję, ogrzać → ogrzeję
+func heuristicGrzac(infinitive string) (PresentTense, bool) {
+	if !strings.HasSuffix(infinitive, "grzać") {
+		return PresentTense{}, false
+	}
+	stem := strings.TrimSuffix(infinitive, "ać") // keeps "grz"
+	return PresentTense{
+		Sg1: stem + "eję",
+		Sg2: stem + "ejesz",
+		Sg3: stem + "eje",
+		Pl1: stem + "ejemy",
+		Pl2: stem + "ejecie",
+		Pl3: stem + "eją",
+	}, true
+}
+
+// heuristicSsac handles -ssać verbs.
+// ssać → ssę, ssiesz, ssie... (front vowels, not ssam)
+// wyssać → wyssę, possać → possę
+func heuristicSsac(infinitive string) (PresentTense, bool) {
+	if !strings.HasSuffix(infinitive, "ssać") {
+		return PresentTense{}, false
+	}
+	stem := strings.TrimSuffix(infinitive, "ać") // keeps "ss"
+	return PresentTense{
+		Sg1: stem + "ę",
+		Sg2: stem + "iesz",
+		Sg3: stem + "ie",
+		Pl1: stem + "iemy",
+		Pl2: stem + "iecie",
+		Pl3: stem + "ą",
 	}, true
 }
 
@@ -809,6 +924,77 @@ func heuristicSlac(infinitive string) (PresentTense, bool) {
 		Pl2: prefix + "ścielecie",
 		Pl3: prefix + "ścielą",
 	}, true
+}
+
+// heuristicTrzecInchoative handles inchoative -trzeć and -drzeć verbs (becoming something).
+// wietrzeć → wietrzeję (to weather), filistrzeć → filistrzeję
+// modrzeć → modrzeję (to become blue), mądrzeć → mądrzeję (to become wiser)
+// These are NOT action verbs like trzeć/drzeć (to rub/tear).
+func heuristicTrzecInchoative(infinitive string) (PresentTense, bool) {
+	// Handle inchoative -drzeć verbs (from adjectives ending in -dry/-dra/-dre)
+	// modrzeć (from modry), mądrzeć (from mądry)
+	if strings.HasSuffix(infinitive, "drzeć") {
+		// Check if it's an inchoative verb (from adjective roots)
+		if isInchoativeDrzec(infinitive) {
+			stem := strings.TrimSuffix(infinitive, "ć")
+			return PresentTense{
+				Sg1: stem + "ję",
+				Sg2: stem + "jesz",
+				Sg3: stem + "je",
+				Pl1: stem + "jemy",
+				Pl2: stem + "jecie",
+				Pl3: stem + "ją",
+			}, true
+		}
+		// Not inchoative - let heuristicTrzec handle it as action verb
+		return PresentTense{}, false
+	}
+
+	// Handle inchoative -trzeć verbs
+	if !strings.HasSuffix(infinitive, "trzeć") {
+		return PresentTense{}, false
+	}
+
+	// Skip the base "trzeć" and simple prefix + trzeć (action verbs)
+	// Action verbs: trzeć, zetrzeć, wytrzeć, przetrzeć, zatrzeć, obtrzeć, utrzeć, natrzeć, potrzeć
+	// Inchoative: wietrzeć, filistrzeć, lustrzeć, chytrzeć, pstrzeć
+	stem := strings.TrimSuffix(infinitive, "trzeć")
+
+	// Simple prefixed action verbs have empty stem or single prefix
+	actionPrefixes := map[string]bool{
+		"": true, "ze": true, "wy": true, "prze": true, "za": true,
+		"ob": true, "u": true, "na": true, "po": true, "o": true,
+		"obe": true, "do": true, "s": true, "roz": true, "roze": true,
+	}
+	if actionPrefixes[stem] {
+		return PresentTense{}, false
+	}
+
+	// Inchoative -trzeć verbs use -eję pattern
+	return PresentTense{
+		Sg1: stem + "trzeję",
+		Sg2: stem + "trzejesz",
+		Sg3: stem + "trzeje",
+		Pl1: stem + "trzejemy",
+		Pl2: stem + "trzejecie",
+		Pl3: stem + "trzeją",
+	}, true
+}
+
+// inchoativeDrzecRoots lists adjective roots that form inchoative -drzeć verbs.
+var inchoativeDrzecRoots = []string{
+	"modrzeć",  // from modry (blue) - to become blue
+	"mądrzeć",  // from mądry (wise) - to become wiser
+}
+
+// isInchoativeDrzec returns true if the verb is an inchoative -drzeć verb.
+func isInchoativeDrzec(infinitive string) bool {
+	for _, root := range inchoativeDrzecRoots {
+		if infinitive == root || strings.HasSuffix(infinitive, root) {
+			return true
+		}
+	}
+	return false
 }
 
 // heuristicTrzec handles -trzeć and -drzeć verbs.
@@ -1313,6 +1499,61 @@ func heuristicEc(infinitive string) (PresentTense, bool) {
 		}, true
 	}
 
+	// -czeć verbs: inchoative verbs like dziczeć, miękczeć → -eję
+	// (not -ę/-ysz which applies to some action -żeć/-rzeć verbs)
+	if strings.HasSuffix(infinitive, "czeć") {
+		stem := strings.TrimSuffix(infinitive, "ć")
+		return PresentTense{
+			Sg1: stem + "ję",
+			Sg2: stem + "jesz",
+			Sg3: stem + "je",
+			Pl1: stem + "jemy",
+			Pl2: stem + "jecie",
+			Pl3: stem + "ją",
+		}, true
+	}
+
+	// -ożeć verbs: inchoative verbs like drożeć, ubożeć, srożeć → -eję
+	if strings.HasSuffix(infinitive, "ożeć") {
+		stem := strings.TrimSuffix(infinitive, "ć")
+		return PresentTense{
+			Sg1: stem + "ję",
+			Sg2: stem + "jesz",
+			Sg3: stem + "je",
+			Pl1: stem + "jemy",
+			Pl2: stem + "jecie",
+			Pl3: stem + "ją",
+		}, true
+	}
+
+	// -urzeć verbs: inchoative verbs like durzeć, burzeć → -eję
+	if strings.HasSuffix(infinitive, "urzeć") {
+		stem := strings.TrimSuffix(infinitive, "ć")
+		return PresentTense{
+			Sg1: stem + "ję",
+			Sg2: stem + "jesz",
+			Sg3: stem + "je",
+			Pl1: stem + "jemy",
+			Pl2: stem + "jecie",
+			Pl3: stem + "ją",
+		}, true
+	}
+
+	// Inchoative -rzeć verbs from adjectives: → -eję
+	// modrzeć (from modry), mądrzeć (from mądry), szarzeć (from szary)
+	// (NOT action verbs like trzeć, drzeć which use -rę)
+	if isInchoativeRzec(infinitive) {
+		stem := strings.TrimSuffix(infinitive, "ć")
+		return PresentTense{
+			Sg1: stem + "ję",
+			Sg2: stem + "jesz",
+			Sg3: stem + "je",
+			Pl1: stem + "jemy",
+			Pl2: stem + "jecie",
+			Pl3: stem + "ją",
+		}, true
+	}
+
 	// Other -leć verbs (maleć, boleć) are mostly inchoative → -eję
 	if strings.HasSuffix(infinitive, "leć") {
 		stem := strings.TrimSuffix(infinitive, "ć")
@@ -1365,6 +1606,26 @@ func heuristicAc(infinitive string) (PresentTense, bool) {
 		Pl2: stem + "cie",
 		Pl3: stem + "ją",
 	}, true
+}
+
+// Inchoative -rzeć verb helpers
+
+// inchoativeRzecRoots lists adjective roots that form inchoative -rzeć verbs.
+// These verbs conjugate with -eję (modrzeję), not -ę like action verbs (drę).
+var inchoativeRzecRoots = []string{
+	"modrzeć",  // from modry (blue) - to become blue
+	"mądrzeć",  // from mądry (wise) - to become wiser
+	"szarzeć",  // from szary (gray) - to become gray
+}
+
+// isInchoativeRzec returns true if the verb is an inchoative -rzeć verb (from adjectives).
+func isInchoativeRzec(infinitive string) bool {
+	for _, root := range inchoativeRzecRoots {
+		if infinitive == root || strings.HasSuffix(infinitive, root) {
+			return true
+		}
+	}
+	return false
 }
 
 // Consonant alternation helpers

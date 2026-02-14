@@ -41,32 +41,39 @@ var homographs = map[string][]Paradigm{
 
 // lookupHomograph returns all paradigms for a homograph verb.
 func lookupHomograph(infinitive string) ([]Paradigm, bool) {
-	// Direct lookup
+	// Direct lookup - only the bare form, not prefixed forms
+	// Prefixed forms like "dostać", "przestać" are NOT homographs:
+	// they only use one paradigm (stanę), handled by heuristics.
 	if paradigms, ok := homographs[infinitive]; ok {
 		return paradigms, true
 	}
 
-	// Check for prefixed forms of homographs
+	// Only słać (not stać) supports prefix expansion for homographs
+	// because prefixed słać forms (wysłać, posłać) can mean either
+	// "to send" or "to spread (bedding)".
 	for _, prefix := range verbPrefixes {
 		if len(infinitive) > len(prefix) && infinitive[:len(prefix)] == prefix {
 			base := infinitive[len(prefix):]
-			if baseParadigms, ok := homographs[base]; ok {
-				// Apply prefix to all paradigms
-				result := make([]Paradigm, len(baseParadigms))
-				for i, bp := range baseParadigms {
-					result[i] = Paradigm{
-						PresentTense: PresentTense{
-							Sg1: prefix + bp.Sg1,
-							Sg2: prefix + bp.Sg2,
-							Sg3: prefix + bp.Sg3,
-							Pl1: prefix + bp.Pl1,
-							Pl2: prefix + bp.Pl2,
-							Pl3: prefix + bp.Pl3,
-						},
-						Gloss: bp.Gloss,
+			// Only expand słać homographs - stać prefixed forms aren't homographs
+			if base == "słać" {
+				if baseParadigms, ok := homographs[base]; ok {
+					// Apply prefix to all paradigms
+					result := make([]Paradigm, len(baseParadigms))
+					for i, bp := range baseParadigms {
+						result[i] = Paradigm{
+							PresentTense: PresentTense{
+								Sg1: prefix + bp.Sg1,
+								Sg2: prefix + bp.Sg2,
+								Sg3: prefix + bp.Sg3,
+								Pl1: prefix + bp.Pl1,
+								Pl2: prefix + bp.Pl2,
+								Pl3: prefix + bp.Pl3,
+							},
+							Gloss: bp.Gloss,
+						}
 					}
+					return result, true
 				}
-				return result, true
 			}
 		}
 	}
@@ -99,6 +106,11 @@ var irregularVerbs = map[string]PresentTense{
 	"dać": {
 		Sg1: "dam", Sg2: "dasz", Sg3: "da",
 		Pl1: "damy", Pl2: "dacie", Pl3: "dadzą",
+	},
+	// sprzedać - compound prefix sprzedać (s+prze+dać)
+	"sprzedać": {
+		Sg1: "sprzedam", Sg2: "sprzedasz", Sg3: "sprzeda",
+		Pl1: "sprzedamy", Pl2: "sprzedacie", Pl3: "sprzedadzą",
 	},
 	"wziąć": {
 		Sg1: "wezmę", Sg2: "weźmiesz", Sg3: "weźmie",
@@ -148,8 +160,8 @@ var irregularVerbs = map[string]PresentTense{
 		Pl1: "kołyszemy", Pl2: "kołyszecie", Pl3: "kołyszą",
 	},
 	"ciosać": {
-		Sg1: "cioszę", Sg2: "cioszesz", Sg3: "ciosze",
-		Pl1: "cioszemy", Pl2: "cioszecie", Pl3: "cioszą",
+		Sg1: "ciosam", Sg2: "ciosasz", Sg3: "ciosa",
+		Pl1: "ciosamy", Pl2: "ciosacie", Pl3: "ciosają",
 	},
 	"ciesać": {
 		Sg1: "cieszę", Sg2: "cieszesz", Sg3: "ciesze",
@@ -333,6 +345,22 @@ var irregularVerbs = map[string]PresentTense{
 		Sg1: "rozpocznę", Sg2: "rozpoczniesz", Sg3: "rozpocznie",
 		Pl1: "rozpoczniemy", Pl2: "rozpoczniecie", Pl3: "rozpoczną",
 	},
+	"spocząć": {
+		Sg1: "spocznę", Sg2: "spoczniesz", Sg3: "spocznie",
+		Pl1: "spoczniemy", Pl2: "spoczniecie", Pl3: "spoczną",
+	},
+	"wypocząć": {
+		Sg1: "wypocznę", Sg2: "wypoczniesz", Sg3: "wypocznie",
+		Pl1: "wypoczniemy", Pl2: "wypoczniecie", Pl3: "wypoczną",
+	},
+	"wszcząć": {
+		Sg1: "wszcznę", Sg2: "wszczniesz", Sg3: "wszcznie",
+		Pl1: "wszczniemy", Pl2: "wszczniecie", Pl3: "wszczną",
+	},
+	"poczęć": {
+		Sg1: "pocznę", Sg2: "poczniesz", Sg3: "pocznie",
+		Pl1: "poczniemy", Pl2: "poczniecie", Pl3: "poczną",
+	},
 
 	// Action verb -mieć patterns (grzmieć → grzmię, not grzmieję)
 	"grzmieć": {
@@ -352,6 +380,24 @@ var irregularVerbs = map[string]PresentTense{
 	"patrzeć": {
 		Sg1: "patrzę", Sg2: "patrzysz", Sg3: "patrzy",
 		Pl1: "patrzymy", Pl2: "patrzycie", Pl3: "patrzą",
+	},
+
+	// Inchoative -rzeć verbs (starzeć się, gorzeć) - use -eję pattern
+	"starzeć": {
+		Sg1: "starzeję", Sg2: "starzejesz", Sg3: "starzeje",
+		Pl1: "starzejemy", Pl2: "starzejecie", Pl3: "starzeją",
+	},
+	"gorzeć": {
+		Sg1: "gorzeję", Sg2: "gorzejesz", Sg3: "gorzeje",
+		Pl1: "gorzejemy", Pl2: "gorzejecie", Pl3: "gorzeją",
+	},
+	"dorzeć": {
+		Sg1: "dorzeję", Sg2: "dorzejesz", Sg3: "dorzeje",
+		Pl1: "dorzejemy", Pl2: "dorzejecie", Pl3: "dorzeją",
+	},
+	"dobrzeć": {
+		Sg1: "dobrzeję", Sg2: "dobrzejesz", Sg3: "dobrzeje",
+		Pl1: "dobrzejemy", Pl2: "dobrzejecie", Pl3: "dobrzeją",
 	},
 
 	// -rwać verbs: use -ę/-ie pattern (not -am/-asz)
@@ -452,6 +498,54 @@ var irregularVerbs = map[string]PresentTense{
 		Pl1: "uczcimy", Pl2: "uczcicie", Pl3: "uczczą",
 	},
 
+	// czcić - needs szcz pattern
+	"czcić": {
+		Sg1: "czczę", Sg2: "czcisz", Sg3: "czci",
+		Pl1: "czcimy", Pl2: "czcicie", Pl3: "czczą",
+	},
+
+	// kpić - no j-insertion (kpię not kpiję)
+	"kpić": {
+		Sg1: "kpię", Sg2: "kpisz", Sg3: "kpi",
+		Pl1: "kpimy", Pl2: "kpicie", Pl3: "kpią",
+	},
+
+	// objąć - e-insertion (obejmę not objmę)
+	"objąć": {
+		Sg1: "obejmę", Sg2: "obejmiesz", Sg3: "obejmie",
+		Pl1: "obejmiemy", Pl2: "obejmiecie", Pl3: "obejmą",
+	},
+
+	// ulec - gn-insertion (ulegnę not ulekę)
+	"ulec": {
+		Sg1: "ulegnę", Sg2: "ulegniesz", Sg3: "ulegnie",
+		Pl1: "ulegniemy", Pl2: "ulegniecie", Pl3: "ulegną",
+	},
+
+	// wściec - kn-insertion (wścieknę not wściekę)
+	"wściec": {
+		Sg1: "wścieknę", Sg2: "wściekniesz", Sg3: "wścieknie",
+		Pl1: "wściekniemy", Pl2: "wściekniecie", Pl3: "wściekną",
+	},
+
+	// dojrzeć - inchoative "to mature" (dojrzeję not dojrzę)
+	"dojrzeć": {
+		Sg1: "dojrzeję", Sg2: "dojrzejesz", Sg3: "dojrzeje",
+		Pl1: "dojrzejemy", Pl2: "dojrzejecie", Pl3: "dojrzeją",
+	},
+
+	// boleć - inchoative pattern (boleję not bolę)
+	"boleć": {
+		Sg1: "boleję", Sg2: "bolejesz", Sg3: "boleje",
+		Pl1: "bolejemy", Pl2: "bolejecie", Pl3: "boleją",
+	},
+
+	// swędzieć - action verb (swędzę not swędzieję)
+	"swędzieć": {
+		Sg1: "swędzę", Sg2: "swędzisz", Sg3: "swędzi",
+		Pl1: "swędzimy", Pl2: "swędzicie", Pl3: "swędzą",
+	},
+
 	// wspomnieć - special prefix form (w + historical root)
 	"wspomnieć": {
 		Sg1: "wspomnę", Sg2: "wspomnisz", Sg3: "wspomni",
@@ -497,6 +591,12 @@ var irregularVerbs = map[string]PresentTense{
 		Pl1: "grzebiemy", Pl2: "grzebiecie", Pl3: "grzebą",
 	},
 
+	// żreć - special -reć pattern (not -rem)
+	"żreć": {
+		Sg1: "żrę", Sg2: "żresz", Sg3: "żre",
+		Pl1: "żremy", Pl2: "żrecie", Pl3: "żrą",
+	},
+
 	// -przeć/-wrzeć verbs: special patterns
 	// oprzeć → oprę (not oprzę)
 	"przeć": {
@@ -521,10 +621,81 @@ var irregularVerbs = map[string]PresentTense{
 		Pl1: "rzeczemy", Pl2: "rzeczecie", Pl3: "rzekną",
 	},
 
+	// tłuc - suppletive stem tłuk/tłucz
+	"tłuc": {
+		Sg1: "tłukę", Sg2: "tłuczesz", Sg3: "tłucze",
+		Pl1: "tłuczemy", Pl2: "tłuczecie", Pl3: "tłuką",
+	},
+
+	// pleść - suppletive stem plot/plec
+	"pleść": {
+		Sg1: "plotę", Sg2: "pleciesz", Sg3: "plecie",
+		Pl1: "pleciemy", Pl2: "pleciecie", Pl3: "plotą",
+	},
+
+	// kląć - suppletive stem kln
+	"kląć": {
+		Sg1: "klnę", Sg2: "klniesz", Sg3: "klnie",
+		Pl1: "klniemy", Pl2: "klniecie", Pl3: "klną",
+	},
+
+	// piąć - suppletive stem pn (with e-insertion for consonant clusters)
+	"piąć": {
+		Sg1: "pnę", Sg2: "pniesz", Sg3: "pnie",
+		Pl1: "pniemy", Pl2: "pniecie", Pl3: "pną",
+	},
+	// Prefixed piąć verbs with e-insertion
+	"wspiąć": {
+		Sg1: "wespnę", Sg2: "wespniesz", Sg3: "wespnie",
+		Pl1: "wespniemy", Pl2: "wespniecie", Pl3: "wespną",
+	},
+	"zapiąć": {
+		Sg1: "zapnę", Sg2: "zapniesz", Sg3: "zapnie",
+		Pl1: "zapniemy", Pl2: "zapniecie", Pl3: "zapną",
+	},
+	"przypiąć": {
+		Sg1: "przypnę", Sg2: "przypniesz", Sg3: "przypnie",
+		Pl1: "przypniemy", Pl2: "przypniecie", Pl3: "przypną",
+	},
+	"odpiąć": {
+		Sg1: "odpnę", Sg2: "odpniesz", Sg3: "odpnie",
+		Pl1: "odpniemy", Pl2: "odpniecie", Pl3: "odpną",
+	},
+	"dopiąć": {
+		Sg1: "dopnę", Sg2: "dopniesz", Sg3: "dopnie",
+		Pl1: "dopniemy", Pl2: "dopniecie", Pl3: "dopną",
+	},
+	"spiąć": {
+		Sg1: "spnę", Sg2: "spniesz", Sg3: "spnie",
+		Pl1: "spniemy", Pl2: "spniecie", Pl3: "spną",
+	},
+	"wpiąć": {
+		Sg1: "wpnę", Sg2: "wpniesz", Sg3: "wpnie",
+		Pl1: "wpniemy", Pl2: "wpniecie", Pl3: "wpną",
+	},
+	"napiąć": {
+		Sg1: "napnę", Sg2: "napniesz", Sg3: "napnie",
+		Pl1: "napniemy", Pl2: "napniecie", Pl3: "napną",
+	},
+	"rozpiąć": {
+		Sg1: "rozpnę", Sg2: "rozpniesz", Sg3: "rozpnie",
+		Pl1: "rozpniemy", Pl2: "rozpniecie", Pl3: "rozpną",
+	},
+	"wypiąć": {
+		Sg1: "wypnę", Sg2: "wypniesz", Sg3: "wypnie",
+		Pl1: "wypniemy", Pl2: "wypniecie", Pl3: "wypną",
+	},
+
 	// wiać - special pattern (wieję not wiam)
 	"wiać": {
 		Sg1: "wieję", Sg2: "wiejesz", Sg3: "wieje",
 		Pl1: "wiejemy", Pl2: "wiejecie", Pl3: "wieją",
+	},
+
+	// chwiać - sway (chwieję not chwiam)
+	"chwiać": {
+		Sg1: "chwieję", Sg2: "chwiejesz", Sg3: "chwieje",
+		Pl1: "chwiejemy", Pl2: "chwiejecie", Pl3: "chwieją",
 	},
 
 	// krajać - j-insertion (kraję not krajam)
@@ -599,10 +770,15 @@ func lookupIrregularWithPrefix(infinitive string) (PresentTense, bool) {
 		"rwać": true, "zwać": true, "dbać": true, "śmiać": true,
 		"cierpieć": true, "wisieć": true, "jeździć": true,
 		"pachnieć": true, "strzec": true, "chować": true,
+		"grzmieć": true, "szumieć": true, "tłumieć": true,
 		"okazać": true, "karać": true, "kraść": true, "kłaść": true,
 		"lać": true, "grześć": true, "przeć": true, "wrzeć": true,
 		"śnić": true, "rzec": true, "wiać": true, "krajać": true,
-		"słać": true, "nająć": true,
+		"słać": true, "nająć": true, "tłuc": true, "pleść": true, "kląć": true,
+		"żreć": true, "chwiać": true,
+		"starzeć": true, "gorzeć": true, "dorzeć": true, "dobrzeć": true,
+		"czcić": true, "kpić": true, "ulec": true, "wściec": true,
+		"dojrzeć": true, "boleć": true, "swędzieć": true,
 	}
 
 	for _, prefix := range verbPrefixes {
