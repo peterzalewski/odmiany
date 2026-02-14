@@ -826,6 +826,18 @@ var irregularVerbs = map[string]PresentTense{
 		Pl1: "chybamy", Pl2: "chybacie", Pl3: "chybają",
 	},
 
+	// gnić - to rot (j-insertion: gniję)
+	"gnić": {
+		Sg1: "gniję", Sg2: "gnijesz", Sg3: "gnije",
+		Pl1: "gnijemy", Pl2: "gnijecie", Pl3: "gniją",
+	},
+
+	// siać - to sow (ia → ie + ję)
+	"siać": {
+		Sg1: "sieję", Sg2: "siejesz", Sg3: "sieje",
+		Pl1: "siejemy", Pl2: "siejecie", Pl3: "sieją",
+	},
+
 	// -tajać verbs meaning "to conceal" (from "taja"), use -tajam not -taję
 	// Different from tajać meaning "to thaw" which uses taję
 	"utajać": {
@@ -911,7 +923,8 @@ func lookupIrregularWithPrefix(infinitive string) (PresentTense, bool) {
 		"czcić": true, "kpić": true, "ulec": true, "wściec": true,
 		"dojrzeć": true, "boleć": true, "swędzieć": true,
 		"tajać": true, "ćpać": true, "wić": true,
-		"bimbać": true, "gabać": true, "chybać": true,
+		"bimbać": true, "gabać": true, "chybać": true, "gnić": true,
+		"siać": true,
 	}
 
 	for _, prefix := range verbPrefixes {
