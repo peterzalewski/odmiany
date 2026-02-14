@@ -273,6 +273,11 @@ func extractCoherentParadigms(infinitive string, forms []VerbForm) []VerbParadig
 			continue
 		}
 
+		// Skip archaic forms
+		if isArchaicParadigm(paradigm) {
+			continue
+		}
+
 		// Mark forms as used
 		usedForms[sg1.Form] = true
 		usedForms[paradigm.Sg2] = true
@@ -285,6 +290,95 @@ func extractCoherentParadigms(infinitive string, forms []VerbForm) []VerbParadig
 	}
 
 	return paradigms
+}
+
+// isArchaicParadigm returns true if the paradigm uses archaic conjugation patterns.
+// These are forms that were standard in older Polish but have been replaced in modern usage.
+func isArchaicParadigm(p VerbParadigm) bool {
+	inf := p.Infinitive
+	sg1 := p.Sg1
+
+	// Pattern 1: -tać verbs with -tam instead of modern -czę
+	// Archaic: szeptać → szeptam, mamrotać → mamrotam
+	// Modern: szeptać → szepczę, mamrotać → mamroczę
+	// Exception: regular -ać verbs like czytać → czytam are NOT archaic
+	if strings.HasSuffix(inf, "tać") && !strings.HasSuffix(inf, "ytać") {
+		// Check for -otać, -etać, -ptać patterns that should use -czę
+		if strings.HasSuffix(inf, "otać") || strings.HasSuffix(inf, "etać") ||
+			strings.HasSuffix(inf, "ptać") {
+			if strings.HasSuffix(sg1, "tam") {
+				return true // archaic -tam form
+			}
+		}
+	}
+
+	// Pattern 2: -ywać verbs with -wam instead of modern -uję
+	// Archaic: wykonywać → wykonywam, pokazywać → pokazywam
+	// Modern: wykonywać → wykonuję, pokazywać → pokazuję
+	// Exception: bywać family (from być) correctly uses -wam
+	if strings.HasSuffix(inf, "ywać") && strings.HasSuffix(sg1, "wam") {
+		// Check if it's NOT a bywać derivative
+		if !isBywacDerivative(inf) {
+			return true // archaic -wam form
+		}
+	}
+
+	// Pattern 3: -iwać verbs with -wam instead of modern -uję
+	if strings.HasSuffix(inf, "iwać") && strings.HasSuffix(sg1, "wam") {
+		return true // archaic -wam form
+	}
+
+	// Pattern 4: -awać verbs with -wam instead of modern -ję
+	// Archaic: stawać → stawam, napawać → napawam
+	// Modern: stawać → staję, napawać → napaję
+	// Exception: -ywać handled above, -iwać handled above
+	if strings.HasSuffix(inf, "awać") && strings.HasSuffix(sg1, "wam") {
+		// Skip if already handled by -ywać or -iwać
+		if !strings.HasSuffix(inf, "ywać") && !strings.HasSuffix(inf, "iwać") {
+			return true // archaic -wam form
+		}
+	}
+
+	// Pattern 5: -ować verbs with -wam instead of modern -uję
+	// Archaic: kować → kowam, knować → knowam
+	// Modern: kować → kuję, knować → knuję
+	if strings.HasSuffix(inf, "ować") && strings.HasSuffix(sg1, "wam") {
+		return true // archaic -wam form
+	}
+
+	// Pattern 6: -przeć verbs with -eję instead of standard -ę
+	// Standard: oprzeć → oprę, przeć → prę
+	// Variant: oprzeć → oprzeję (less common, treat as archaic for consistency)
+	if strings.HasSuffix(inf, "przeć") && strings.HasSuffix(sg1, "eję") {
+		return true
+	}
+
+	return false
+}
+
+// isBywacDerivative checks if a verb is derived from bywać (być + -wać).
+// These correctly use -wam: bywać → bywam, przebywać → przebywam
+func isBywacDerivative(inf string) bool {
+	// Must end in -bywać
+	if !strings.HasSuffix(inf, "bywać") {
+		return false
+	}
+	// The part before -bywać should be empty or a valid prefix
+	prefix := strings.TrimSuffix(inf, "bywać")
+	if prefix == "" {
+		return true // bywać itself
+	}
+	// Check for common verbal prefixes
+	prefixes := []string{
+		"do", "na", "o", "ob", "od", "po", "pod", "prze", "przy",
+		"roz", "u", "w", "wy", "z", "za",
+	}
+	for _, p := range prefixes {
+		if prefix == p {
+			return true
+		}
+	}
+	return false
 }
 
 // findPattern returns the conjugation pattern that matches the given sg1 form.
