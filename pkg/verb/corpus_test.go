@@ -45,7 +45,7 @@ func TestCorpusAccuracy(t *testing.T) {
 			Pl1: e.Pl1, Pl2: e.Pl2, Pl3: e.Pl3,
 		}
 
-		got, err := ConjugatePresent(e.Infinitive)
+		paradigms, err := ConjugatePresent(e.Infinitive)
 		if err != nil {
 			noMatch++
 			pattern := classifyFailure(e.Infinitive, "no_match")
@@ -53,11 +53,20 @@ func TestCorpusAccuracy(t *testing.T) {
 			continue
 		}
 
-		if got.Equals(expected) {
+		// Check if ANY paradigm matches completely
+		anyMatch := false
+		for _, p := range paradigms {
+			if p.PresentTense.Equals(expected) {
+				anyMatch = true
+				break
+			}
+		}
+
+		if anyMatch {
 			passed++
 		} else {
 			failed++
-			pattern := classifyFailure(e.Infinitive, describeError(e.Infinitive, expected, got))
+			pattern := classifyFailure(e.Infinitive, describeError(e.Infinitive, expected, paradigms[0].PresentTense))
 			failures[pattern]++
 		}
 	}
@@ -162,13 +171,23 @@ func TestSampleVerbs(t *testing.T) {
 			Pl1: e.Pl1, Pl2: e.Pl2, Pl3: e.Pl3,
 		}
 
-		got, err := ConjugatePresent(inf)
+		paradigms, err := ConjugatePresent(inf)
 		if err != nil {
 			t.Logf("%s: no match (expected: %s, %s, %s...)", inf, e.Sg1, e.Sg2, e.Sg3)
 			continue
 		}
 
-		if got.Equals(expected) {
+		// Check if any paradigm matches
+		anyMatch := false
+		for _, p := range paradigms {
+			if p.PresentTense.Equals(expected) {
+				anyMatch = true
+				break
+			}
+		}
+
+		got := paradigms[0].PresentTense
+		if anyMatch {
 			t.Logf("%s: ✓ %s, %s, %s...", inf, got.Sg1, got.Sg2, got.Sg3)
 		} else {
 			t.Logf("%s: ✗ got %s, %s, %s; want %s, %s, %s",

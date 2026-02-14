@@ -44,10 +44,14 @@ func TestConjugatePresentAc(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.infinitive, func(t *testing.T) {
-			got, err := ConjugatePresent(tt.infinitive)
+			paradigms, err := ConjugatePresent(tt.infinitive)
 			if err != nil {
 				t.Fatalf("ConjugatePresent(%q) error: %v", tt.infinitive, err)
 			}
+			if len(paradigms) == 0 {
+				t.Fatalf("ConjugatePresent(%q) returned no paradigms", tt.infinitive)
+			}
+			got := paradigms[0].PresentTense
 			if got != tt.want {
 				t.Errorf("ConjugatePresent(%q) =\n%+v\nwant:\n%+v", tt.infinitive, got, tt.want)
 			}
@@ -55,16 +59,17 @@ func TestConjugatePresentAc(t *testing.T) {
 	}
 }
 
-func TestConjugatePresentUnsupported(t *testing.T) {
-	// These verb classes are not yet supported.
-	// Note: pisać ends in -ać but is conjugation III (piszę), not I (czytam).
-	// We don't yet distinguish these, so pisać would be incorrectly conjugated.
-	unsupported := []string{"robić", "nieść", "być"}
-	for _, v := range unsupported {
+func TestConjugatePresentSupported(t *testing.T) {
+	// These verbs should now be supported via irregulars or heuristics.
+	supported := []string{"robić", "nieść", "być"}
+	for _, v := range supported {
 		t.Run(v, func(t *testing.T) {
-			_, err := ConjugatePresent(v)
-			if err == nil {
-				t.Errorf("ConjugatePresent(%q) expected error, got nil", v)
+			paradigms, err := ConjugatePresent(v)
+			if err != nil {
+				t.Errorf("ConjugatePresent(%q) returned error: %v", v, err)
+			}
+			if len(paradigms) == 0 {
+				t.Errorf("ConjugatePresent(%q) returned no paradigms", v)
 			}
 		})
 	}
@@ -98,5 +103,29 @@ func TestPresentTenseGet(t *testing.T) {
 		if got != tt.want {
 			t.Errorf("Get(%d, %d) = %q, want %q", tt.person, tt.number, got, tt.want)
 		}
+	}
+}
+
+func TestHomographs(t *testing.T) {
+	// Test that homographs return multiple paradigms
+	tests := []struct {
+		infinitive string
+		wantCount  int
+	}{
+		{"stać", 2},  // to stand vs to become
+		{"słać", 2},  // to send vs to spread (bedding)
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.infinitive, func(t *testing.T) {
+			paradigms, err := ConjugatePresent(tt.infinitive)
+			if err != nil {
+				t.Fatalf("ConjugatePresent(%q) error: %v", tt.infinitive, err)
+			}
+			if len(paradigms) != tt.wantCount {
+				t.Errorf("ConjugatePresent(%q) returned %d paradigms, want %d",
+					tt.infinitive, len(paradigms), tt.wantCount)
+			}
+		})
 	}
 }

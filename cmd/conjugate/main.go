@@ -27,8 +27,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	query := os.Args[1]
-
 	// Load corpus for comparison
 	data, err := os.ReadFile("pkg/verb/testdata/verbs.json")
 	if err != nil {
@@ -48,35 +46,42 @@ func main() {
 		corpus[e.Infinitive] = e
 	}
 
-	// Check for exact match first
-	if e, ok := corpus[query]; ok {
-		showDetailed(query, e)
-		return
-	}
-
-	// Search by prefix or suffix
-	var matches []corpusEntry
-	for _, e := range entries {
-		if strings.HasPrefix(e.Infinitive, query) || strings.HasSuffix(e.Infinitive, query) {
-			matches = append(matches, e)
+	// Process each argument
+	for i, query := range os.Args[1:] {
+		if i > 0 {
+			fmt.Println()
 		}
-	}
 
-	if len(matches) == 0 {
-		// Try conjugating anyway (might not be in corpus)
-		fmt.Printf("No corpus matches for %q, attempting conjugation:\n\n", query)
-		got, err := verb.ConjugatePresent(query)
-		if err != nil {
-			fmt.Printf("  %s: NO MATCH (%v)\n", query, err)
-		} else {
-			printParadigm(query, got)
+		// Check for exact match first
+		if e, ok := corpus[query]; ok {
+			showDetailed(query, e)
+			continue
 		}
-		return
-	}
 
-	fmt.Printf("Found %d matches for %q:\n\n", len(matches), query)
-	for _, e := range matches {
-		showComparison(e)
+		// Search by prefix or suffix
+		var matches []corpusEntry
+		for _, e := range entries {
+			if strings.HasPrefix(e.Infinitive, query) || strings.HasSuffix(e.Infinitive, query) {
+				matches = append(matches, e)
+			}
+		}
+
+		if len(matches) == 0 {
+			// Try conjugating anyway (might not be in corpus)
+			fmt.Printf("No corpus matches for %q, attempting conjugation:\n\n", query)
+			paradigms, err := verb.ConjugatePresent(query)
+			if err != nil {
+				fmt.Printf("  %s: NO MATCH (%v)\n", query, err)
+			} else {
+				printParadigms(query, paradigms)
+			}
+			continue
+		}
+
+		fmt.Printf("Found %d matches for %q:\n\n", len(matches), query)
+		for _, e := range matches {
+			showComparison(e)
+		}
 	}
 }
 
@@ -88,31 +93,44 @@ func showDetailed(infinitive string, e corpusEntry) {
 		Pl1: e.Pl1, Pl2: e.Pl2, Pl3: e.Pl3,
 	}
 
-	got, err := verb.ConjugatePresent(infinitive)
+	paradigms, err := verb.ConjugatePresent(infinitive)
 
 	fmt.Println("Expected (corpus):")
-	printParadigm("", expected)
+	printParadigm(expected)
 
 	fmt.Println("\nGot (heuristic):")
 	if err != nil {
 		fmt.Printf("  NO MATCH: %v\n", err)
 	} else {
-		printParadigm("", got)
+		printParadigms("", paradigms)
 	}
 
 	if err == nil {
 		fmt.Println("\nComparison:")
-		compare("Sg1", expected.Sg1, got.Sg1)
-		compare("Sg2", expected.Sg2, got.Sg2)
-		compare("Sg3", expected.Sg3, got.Sg3)
-		compare("Pl1", expected.Pl1, got.Pl1)
-		compare("Pl2", expected.Pl2, got.Pl2)
-		compare("Pl3", expected.Pl3, got.Pl3)
+		// For homographs, check if ANY paradigm matches
+		anyMatch := false
+		for _, p := range paradigms {
+			if p.PresentTense.Equals(expected) {
+				anyMatch = true
+				break
+			}
+		}
+		if anyMatch {
+			fmt.Println("  ✓ One of the paradigms matches the corpus exactly")
+		} else {
+			// Show comparison with first paradigm
+			compare("Sg1", expected.Sg1, paradigms[0].Sg1)
+			compare("Sg2", expected.Sg2, paradigms[0].Sg2)
+			compare("Sg3", expected.Sg3, paradigms[0].Sg3)
+			compare("Pl1", expected.Pl1, paradigms[0].Pl1)
+			compare("Pl2", expected.Pl2, paradigms[0].Pl2)
+			compare("Pl3", expected.Pl3, paradigms[0].Pl3)
+		}
 	}
 }
 
 func showComparison(e corpusEntry) {
-	got, err := verb.ConjugatePresent(e.Infinitive)
+	paradigms, err := verb.ConjugatePresent(e.Infinitive)
 
 	status := "✓"
 	if err != nil {
@@ -122,7 +140,15 @@ func showComparison(e corpusEntry) {
 			Sg1: e.Sg1, Sg2: e.Sg2, Sg3: e.Sg3,
 			Pl1: e.Pl1, Pl2: e.Pl2, Pl3: e.Pl3,
 		}
-		if !got.Equals(expected) {
+		// Check if any paradigm matches
+		anyMatch := false
+		for _, p := range paradigms {
+			if p.PresentTense.Equals(expected) {
+				anyMatch = true
+				break
+			}
+		}
+		if !anyMatch {
 			status = "✗ WRONG"
 		}
 	}
@@ -130,14 +156,24 @@ func showComparison(e corpusEntry) {
 	if err != nil {
 		fmt.Printf("%-20s %s (want: %s)\n", e.Infinitive, status, e.Sg1)
 	} else {
-		fmt.Printf("%-20s %s got=%-15s want=%s\n", e.Infinitive, status, got.Sg1, e.Sg1)
+		fmt.Printf("%-20s %s got=%-15s want=%s\n", e.Infinitive, status, paradigms[0].Sg1, e.Sg1)
 	}
 }
 
-func printParadigm(label string, p verb.PresentTense) {
-	if label != "" {
-		fmt.Printf("%s:\n", label)
+func printParadigms(label string, paradigms []verb.Paradigm) {
+	for i, p := range paradigms {
+		if len(paradigms) > 1 {
+			if p.Gloss != "" {
+				fmt.Printf("  [%d] %s:\n", i+1, p.Gloss)
+			} else {
+				fmt.Printf("  [%d]:\n", i+1)
+			}
+		}
+		printParadigm(p.PresentTense)
 	}
+}
+
+func printParadigm(p verb.PresentTense) {
 	fmt.Printf("  Sg: %s, %s, %s\n", p.Sg1, p.Sg2, p.Sg3)
 	fmt.Printf("  Pl: %s, %s, %s\n", p.Pl1, p.Pl2, p.Pl3)
 }

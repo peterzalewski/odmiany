@@ -23,11 +23,12 @@ type corpusEntry struct {
 }
 
 type failure struct {
-	Infinitive string
-	Freq       int
-	Got        string
-	Want       string
-	NoMatch    bool
+	Infinitive  string
+	Freq        int
+	Got         string
+	Want        string
+	NoMatch     bool
+	WrongForms  []string // which specific forms are wrong
 }
 
 func main() {
@@ -55,7 +56,7 @@ func main() {
 			Pl1: e.Pl1, Pl2: e.Pl2, Pl3: e.Pl3,
 		}
 
-		got, err := verb.ConjugatePresent(e.Infinitive)
+		paradigms, err := verb.ConjugatePresent(e.Infinitive)
 
 		// Get frequency - check infinitive and all conjugated forms
 		freq := getVerbFrequency(freqMap, e)
@@ -68,15 +69,34 @@ func main() {
 				Want:       e.Sg1,
 				NoMatch:    true,
 			})
-		} else if !got.Equals(expected) {
-			failures = append(failures, failure{
-				Infinitive: e.Infinitive,
-				Freq:       freq,
-				Got:        got.Sg1,
-				Want:       e.Sg1,
-				NoMatch:    false,
-			})
+			continue
 		}
+
+		// Check if ANY paradigm matches completely
+		anyFullMatch := false
+		for _, p := range paradigms {
+			if p.PresentTense.Equals(expected) {
+				anyFullMatch = true
+				break
+			}
+		}
+
+		if anyFullMatch {
+			continue // Success - at least one paradigm matches
+		}
+
+		// Find the best matching paradigm and report which forms differ
+		bestParadigm := paradigms[0].PresentTense
+		wrongForms := compareParadigms(expected, bestParadigm)
+
+		failures = append(failures, failure{
+			Infinitive: e.Infinitive,
+			Freq:       freq,
+			Got:        bestParadigm.Sg1,
+			Want:       e.Sg1,
+			NoMatch:    false,
+			WrongForms: wrongForms,
+		})
 	}
 
 	// Sort by frequency (descending)
@@ -90,12 +110,40 @@ func main() {
 		if f.NoMatch {
 			status = "NO_MATCH"
 		}
-		fmt.Printf("%-20s freq=%9d  %-10s got=%-15s want=%s\n",
-			f.Infinitive, f.Freq, status, f.Got, f.Want)
+		wrongInfo := ""
+		if len(f.WrongForms) > 0 {
+			wrongInfo = fmt.Sprintf(" [%s]", strings.Join(f.WrongForms, ","))
+		}
+		fmt.Printf("%-20s freq=%9d  %-10s got=%-15s want=%s%s\n",
+			f.Infinitive, f.Freq, status, f.Got, f.Want, wrongInfo)
 	}
 
 	fmt.Fprintf(os.Stderr, "\nTotal failures: %d\n", len(failures))
 	fmt.Fprintf(os.Stderr, "Frequency source: OpenSubtitles 2018 (hermitdave/FrequencyWords)\n")
+}
+
+// compareParadigms returns a list of form names that differ
+func compareParadigms(expected, got verb.PresentTense) []string {
+	var wrong []string
+	if expected.Sg1 != got.Sg1 {
+		wrong = append(wrong, "1sg")
+	}
+	if expected.Sg2 != got.Sg2 {
+		wrong = append(wrong, "2sg")
+	}
+	if expected.Sg3 != got.Sg3 {
+		wrong = append(wrong, "3sg")
+	}
+	if expected.Pl1 != got.Pl1 {
+		wrong = append(wrong, "1pl")
+	}
+	if expected.Pl2 != got.Pl2 {
+		wrong = append(wrong, "2pl")
+	}
+	if expected.Pl3 != got.Pl3 {
+		wrong = append(wrong, "3pl")
+	}
+	return wrong
 }
 
 // loadFrequency loads word frequency data from hermitdave format: "word count"
@@ -123,9 +171,9 @@ func loadFrequency(path string) map[string]int {
 	return freq
 }
 
-// Homographs: verb forms that collide with common non-verb words
+// freqHomographs: verb forms that collide with common non-verb words
 // These would give misleading frequency data
-var homographs = map[string]bool{
+var freqHomographs = map[string]bool{
 	"mnie": true, // pronoun "me" (dat/acc) vs. Sg3 of "miąć" (to crumple)
 	"mną":  true, // pronoun "me" (instrumental) vs. Pl3 of "miąć"
 }
@@ -142,7 +190,7 @@ func getVerbFrequency(freqMap map[string]int, e corpusEntry) int {
 	// Check all conjugated forms (these appear more often in subtitles)
 	forms := []string{e.Sg1, e.Sg2, e.Sg3, e.Pl1, e.Pl2, e.Pl3}
 	for _, form := range forms {
-		if homographs[form] {
+		if freqHomographs[form] {
 			continue // skip known homographs
 		}
 		if f, ok := freqMap[form]; ok && f > maxFreq {

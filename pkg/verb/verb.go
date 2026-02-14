@@ -60,21 +60,33 @@ func (p PresentTense) Equals(other PresentTense) bool {
 		p.Pl3 == other.Pl3
 }
 
-// ConjugatePresent returns the present tense paradigm for a verb.
-// First checks the irregular verb lookup table, then falls back to heuristics.
-func ConjugatePresent(infinitive string) (PresentTense, error) {
-	// Check irregular verbs first (including prefixed forms)
+// Paradigm represents a conjugation paradigm with an optional gloss.
+// Homographs (verbs with multiple meanings) have multiple paradigms.
+type Paradigm struct {
+	PresentTense
+	Gloss string // e.g., "to stand", "to become" (empty for non-homographs)
+}
+
+// ConjugatePresent returns all valid present tense paradigms for a verb.
+// Most verbs return a single paradigm; homographs return multiple.
+func ConjugatePresent(infinitive string) ([]Paradigm, error) {
+	// Check homographs first (verbs with multiple valid paradigms)
+	if paradigms, ok := lookupHomograph(infinitive); ok {
+		return paradigms, nil
+	}
+
+	// Check irregular verbs (including prefixed forms)
 	if p, ok := lookupIrregularWithPrefix(infinitive); ok {
-		return p, nil
+		return []Paradigm{{PresentTense: p}}, nil
 	}
 
 	// Try heuristics in order of specificity
 	for _, h := range heuristics {
 		if p, ok := h(infinitive); ok {
-			return p, nil
+			return []Paradigm{{PresentTense: p}}, nil
 		}
 	}
-	return PresentTense{}, fmt.Errorf("no heuristic matched: %s", infinitive)
+	return nil, fmt.Errorf("no heuristic matched: %s", infinitive)
 }
 
 // heuristic is a function that attempts to conjugate a verb.

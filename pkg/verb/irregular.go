@@ -1,5 +1,79 @@
 package verb
 
+// homographs contains verbs with multiple valid paradigms (different meanings).
+// These are checked first before irregular verbs.
+var homographs = map[string][]Paradigm{
+	// stać: "to stand" (imperfective) vs "to become/afford" (perfective)
+	"stać": {
+		{
+			PresentTense: PresentTense{
+				Sg1: "stoję", Sg2: "stoisz", Sg3: "stoi",
+				Pl1: "stoimy", Pl2: "stoicie", Pl3: "stoją",
+			},
+			Gloss: "to stand",
+		},
+		{
+			PresentTense: PresentTense{
+				Sg1: "stanę", Sg2: "staniesz", Sg3: "stanie",
+				Pl1: "staniemy", Pl2: "staniecie", Pl3: "staną",
+			},
+			Gloss: "to become, to afford",
+		},
+	},
+	// słać: "to send" vs "to spread (bedding)"
+	"słać": {
+		{
+			PresentTense: PresentTense{
+				Sg1: "ślę", Sg2: "ślesz", Sg3: "śle",
+				Pl1: "ślemy", Pl2: "ślecie", Pl3: "ślą",
+			},
+			Gloss: "to send",
+		},
+		{
+			PresentTense: PresentTense{
+				Sg1: "ścielę", Sg2: "ścielesz", Sg3: "ściele",
+				Pl1: "ścielemy", Pl2: "ścielecie", Pl3: "ścielą",
+			},
+			Gloss: "to spread (bedding)",
+		},
+	},
+}
+
+// lookupHomograph returns all paradigms for a homograph verb.
+func lookupHomograph(infinitive string) ([]Paradigm, bool) {
+	// Direct lookup
+	if paradigms, ok := homographs[infinitive]; ok {
+		return paradigms, true
+	}
+
+	// Check for prefixed forms of homographs
+	for _, prefix := range verbPrefixes {
+		if len(infinitive) > len(prefix) && infinitive[:len(prefix)] == prefix {
+			base := infinitive[len(prefix):]
+			if baseParadigms, ok := homographs[base]; ok {
+				// Apply prefix to all paradigms
+				result := make([]Paradigm, len(baseParadigms))
+				for i, bp := range baseParadigms {
+					result[i] = Paradigm{
+						PresentTense: PresentTense{
+							Sg1: prefix + bp.Sg1,
+							Sg2: prefix + bp.Sg2,
+							Sg3: prefix + bp.Sg3,
+							Pl1: prefix + bp.Pl1,
+							Pl2: prefix + bp.Pl2,
+							Pl3: prefix + bp.Pl3,
+						},
+						Gloss: bp.Gloss,
+					}
+				}
+				return result, true
+			}
+		}
+	}
+
+	return nil, false
+}
+
 // irregularVerbs contains present tense paradigms for verbs that cannot
 // be conjugated by heuristics alone. These are either:
 // - Suppletive verbs (stem changes completely: być → jestem)
@@ -110,13 +184,6 @@ var irregularVerbs = map[string]PresentTense{
 	"lizać": {
 		Sg1: "liżę", Sg2: "liżesz", Sg3: "liże",
 		Pl1: "liżemy", Pl2: "liżecie", Pl3: "liżą",
-	},
-
-	// stać - has two meanings with different conjugations
-	// stać (to stand) → stoję, stoisz... (imperfective)
-	"stać": {
-		Sg1: "stoję", Sg2: "stoisz", Sg3: "stoi",
-		Pl1: "stoimy", Pl2: "stoicie", Pl3: "stoją",
 	},
 
 	// naleźć - suppletive stem najd- (base for znaleźć, odnaleźć, etc.)
@@ -402,6 +469,75 @@ var irregularVerbs = map[string]PresentTense{
 		Sg1: "wskażę", Sg2: "wskażesz", Sg3: "wskaże",
 		Pl1: "wskażemy", Pl2: "wskażecie", Pl3: "wskażą",
 	},
+
+	// brać prefix verbs with vowel elision
+	// ode+brać → odbiorę (not odebiorę)
+	"odebrać": {
+		Sg1: "odbiorę", Sg2: "odbierzesz", Sg3: "odbierze",
+		Pl1: "odbierzemy", Pl2: "odbierzecie", Pl3: "odbiorą",
+	},
+	"zebrać": {
+		Sg1: "zbiorę", Sg2: "zbierzesz", Sg3: "zbierze",
+		Pl1: "zbierzemy", Pl2: "zbierzecie", Pl3: "zbiorą",
+	},
+	"rozebrać": {
+		Sg1: "rozbiorę", Sg2: "rozbierzesz", Sg3: "rozbierze",
+		Pl1: "rozbierzemy", Pl2: "rozbierzecie", Pl3: "rozbiorą",
+	},
+
+	// lać verbs (j-insertion like myć)
+	"lać": {
+		Sg1: "leję", Sg2: "lejesz", Sg3: "leje",
+		Pl1: "lejemy", Pl2: "lejecie", Pl3: "leją",
+	},
+
+	// pogrześć - suppletive grzeb- stem
+	"grześć": {
+		Sg1: "grzebę", Sg2: "grzebiesz", Sg3: "grzebie",
+		Pl1: "grzebiemy", Pl2: "grzebiecie", Pl3: "grzebą",
+	},
+
+	// -przeć/-wrzeć verbs: special patterns
+	// oprzeć → oprę (not oprzę)
+	"przeć": {
+		Sg1: "prę", Sg2: "przesz", Sg3: "prze",
+		Pl1: "przemy", Pl2: "przecie", Pl3: "prą",
+	},
+	// zawrzeć → zawrę
+	"wrzeć": {
+		Sg1: "wrę", Sg2: "wrzesz", Sg3: "wrze",
+		Pl1: "wrzemy", Pl2: "wrzecie", Pl3: "wrą",
+	},
+
+	// śnić - no j-insertion (śnię not śniję)
+	"śnić": {
+		Sg1: "śnię", Sg2: "śnisz", Sg3: "śni",
+		Pl1: "śnimy", Pl2: "śnicie", Pl3: "śnią",
+	},
+
+	// rzec - k-insertion like biec
+	"rzec": {
+		Sg1: "rzeknę", Sg2: "rzeczesz", Sg3: "rzecze",
+		Pl1: "rzeczemy", Pl2: "rzeczecie", Pl3: "rzekną",
+	},
+
+	// wiać - special pattern (wieję not wiam)
+	"wiać": {
+		Sg1: "wieję", Sg2: "wiejesz", Sg3: "wieje",
+		Pl1: "wiejemy", Pl2: "wiejecie", Pl3: "wieją",
+	},
+
+	// krajać - j-insertion (kraję not krajam)
+	"krajać": {
+		Sg1: "kraję", Sg2: "krajesz", Sg3: "kraje",
+		Pl1: "krajemy", Pl2: "krajecie", Pl3: "krają",
+	},
+
+	// nająć - jm- stem like jąć
+	"nająć": {
+		Sg1: "najmę", Sg2: "najmiesz", Sg3: "najmie",
+		Pl1: "najmiemy", Pl2: "najmiecie", Pl3: "najmą",
+	},
 }
 
 // lookupIrregular checks if a verb has an irregular paradigm.
@@ -464,6 +600,9 @@ func lookupIrregularWithPrefix(infinitive string) (PresentTense, bool) {
 		"cierpieć": true, "wisieć": true, "jeździć": true,
 		"pachnieć": true, "strzec": true, "chować": true,
 		"okazać": true, "karać": true, "kraść": true, "kłaść": true,
+		"lać": true, "grześć": true, "przeć": true, "wrzeć": true,
+		"śnić": true, "rzec": true, "wiać": true, "krajać": true,
+		"słać": true, "nająć": true,
 	}
 
 	for _, prefix := range verbPrefixes {
