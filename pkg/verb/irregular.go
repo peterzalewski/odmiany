@@ -118,6 +118,290 @@ var irregularVerbs = map[string]PresentTense{
 		Sg1: "stoję", Sg2: "stoisz", Sg3: "stoi",
 		Pl1: "stoimy", Pl2: "stoicie", Pl3: "stoją",
 	},
+
+	// naleźć - suppletive stem najd- (base for znaleźć, odnaleźć, etc.)
+	// naleźć → najdę, najdziesz, najdzie...
+	"naleźć": {
+		Sg1: "najdę", Sg2: "najdziesz", Sg3: "najdzie",
+		Pl1: "najdziemy", Pl2: "najdziecie", Pl3: "najdą",
+	},
+
+	// spać - stem change s→ś before palatal
+	// spać → śpię, śpisz, śpi...
+	"spać": {
+		Sg1: "śpię", Sg2: "śpisz", Sg3: "śpi",
+		Pl1: "śpimy", Pl2: "śpicie", Pl3: "śpią",
+	},
+
+	// bać się - suppletive stem boj-
+	// bać → boję, boisz, boi...
+	"bać": {
+		Sg1: "boję", Sg2: "boisz", Sg3: "boi",
+		Pl1: "boimy", Pl2: "boicie", Pl3: "boją",
+	},
+
+	// dziać się - special -ać → -eję pattern
+	// dziać → dzieję, dziejesz, dzieje...
+	"dziać": {
+		Sg1: "dzieję", Sg2: "dziejesz", Sg3: "dzieje",
+		Pl1: "dziejemy", Pl2: "dziejecie", Pl3: "dzieją",
+	},
+
+	// podobać się - regular -am (not alternating like most -bać)
+	"podobać": {
+		Sg1: "podobam", Sg2: "podobasz", Sg3: "podoba",
+		Pl1: "podobamy", Pl2: "podobacie", Pl3: "podobają",
+	},
+
+	// Monosyllabic -ić verbs with j-insertion
+	// bić → biję (zabić → zabiję, pobić → pobiję, etc.)
+	"bić": {
+		Sg1: "biję", Sg2: "bijesz", Sg3: "bije",
+		Pl1: "bijemy", Pl2: "bijecie", Pl3: "biją",
+	},
+	// lić → liję (oblić → obleję, wylić → wyleję, etc.)
+	"lić": {
+		Sg1: "liję", Sg2: "lijesz", Sg3: "lije",
+		Pl1: "lijemy", Pl2: "lijecie", Pl3: "liją",
+	},
+	// pić → piję (wypić, napić, etc.)
+	"pić": {
+		Sg1: "piję", Sg2: "pijesz", Sg3: "pije",
+		Pl1: "pijemy", Pl2: "pijecie", Pl3: "piją",
+	},
+	// żyć → żyję (przeżyć, wyżyć, etc.)
+	"żyć": {
+		Sg1: "żyję", Sg2: "żyjesz", Sg3: "żyje",
+		Pl1: "żyjemy", Pl2: "żyjecie", Pl3: "żyją",
+	},
+	// myć → myję (umyć, wymyć, etc.)
+	"myć": {
+		Sg1: "myję", Sg2: "myjesz", Sg3: "myje",
+		Pl1: "myjemy", Pl2: "myjecie", Pl3: "myją",
+	},
+	// ryć → ryję (wyryć, zaryć, etc.)
+	"ryć": {
+		Sg1: "ryję", Sg2: "ryjesz", Sg3: "ryje",
+		Pl1: "ryjemy", Pl2: "ryjecie", Pl3: "ryją",
+	},
+	// szyć → szyję (zszyć, uszyć, etc.)
+	"szyć": {
+		Sg1: "szyję", Sg2: "szyjesz", Sg3: "szyje",
+		Pl1: "szyjemy", Pl2: "szyjecie", Pl3: "szyją",
+	},
+	// wyć → wyję (zawyć, etc.)
+	"wyć": {
+		Sg1: "wyję", Sg2: "wyjesz", Sg3: "wyje",
+		Pl1: "wyjemy", Pl2: "wyjecie", Pl3: "wyją",
+	},
+	// kryć → kryję (ukryć, odkryć, etc.)
+	"kryć": {
+		Sg1: "kryję", Sg2: "kryjesz", Sg3: "kryje",
+		Pl1: "kryjemy", Pl2: "kryjecie", Pl3: "kryją",
+	},
+
+	// -pomnieć verbs: zapomnieć → zapomnę (ie drops)
+	"pomnieć": {
+		Sg1: "pomnę", Sg2: "pomnisz", Sg3: "pomni",
+		Pl1: "pomnimy", Pl2: "pomnicie", Pl3: "pomną",
+	},
+
+	// -mrzeć verbs: umrzeć → umrę (rz→r)
+	"mrzeć": {
+		Sg1: "mrę", Sg2: "mrzesz", Sg3: "mrze",
+		Pl1: "mrzemy", Pl2: "mrzecie", Pl3: "mrą",
+	},
+
+	// ciec verbs: uciec → ucieknę (k-insertion like biec)
+	"ciec": {
+		Sg1: "cieknę", Sg2: "ciekniesz", Sg3: "cieknie",
+		Pl1: "ciekniemy", Pl2: "ciekniecie", Pl3: "ciekną",
+	},
+
+	// woleć - special -eć verb
+	"woleć": {
+		Sg1: "wolę", Sg2: "wolisz", Sg3: "woli",
+		Pl1: "wolimy", Pl2: "wolicie", Pl3: "wolą",
+	},
+
+	// -jąć verbs: suppletive stem -jm-/-m-
+	// zająć → zajmę, przyjąć → przyjmę, etc.
+	"jąć": {
+		Sg1: "jmę", Sg2: "jmiesz", Sg3: "jmie",
+		Pl1: "jmiemy", Pl2: "jmiecie", Pl3: "jmą",
+	},
+	// Special -jąć verbs with e-insertion (consonant cluster + jąć)
+	// zdjąć → zdejmę (z + d + jąć, d insertion)
+	"zdjąć": {
+		Sg1: "zdejmę", Sg2: "zdejmiesz", Sg3: "zdejmie",
+		Pl1: "zdejmiemy", Pl2: "zdejmiecie", Pl3: "zdejmą",
+	},
+	// podjąć → podejmę (pod + jąć, e insertion)
+	"podjąć": {
+		Sg1: "podejmę", Sg2: "podejmiesz", Sg3: "podejmie",
+		Pl1: "podejmiemy", Pl2: "podejmiecie", Pl3: "podejmą",
+	},
+	// odjąć → odejmę
+	"odjąć": {
+		Sg1: "odejmę", Sg2: "odejmiesz", Sg3: "odejmie",
+		Pl1: "odejmiemy", Pl2: "odejmiecie", Pl3: "odejmą",
+	},
+	// wziąć is already in the list as suppletive
+
+	// począć → pocznę (czn- stem, different from -jąć)
+	"cząć": {
+		Sg1: "cznę", Sg2: "czniesz", Sg3: "cznie",
+		Pl1: "czniemy", Pl2: "czniecie", Pl3: "czną",
+	},
+	// począć family - add as direct entries since prefix analysis is complex
+	"począć": {
+		Sg1: "pocznę", Sg2: "poczniesz", Sg3: "pocznie",
+		Pl1: "poczniemy", Pl2: "poczniecie", Pl3: "poczną",
+	},
+	"odpocząć": {
+		Sg1: "odpocznę", Sg2: "odpoczniesz", Sg3: "odpocznie",
+		Pl1: "odpoczniemy", Pl2: "odpoczniecie", Pl3: "odpoczną",
+	},
+	"rozpocząć": {
+		Sg1: "rozpocznę", Sg2: "rozpoczniesz", Sg3: "rozpocznie",
+		Pl1: "rozpoczniemy", Pl2: "rozpoczniecie", Pl3: "rozpoczną",
+	},
+
+	// Action verb -mieć patterns (grzmieć → grzmię, not grzmieję)
+	"grzmieć": {
+		Sg1: "grzmię", Sg2: "grzmisz", Sg3: "grzmi",
+		Pl1: "grzmimy", Pl2: "grzmicie", Pl3: "grzmią",
+	},
+	"szumieć": {
+		Sg1: "szumię", Sg2: "szumisz", Sg3: "szumi",
+		Pl1: "szumimy", Pl2: "szumicie", Pl3: "szumią",
+	},
+	"tłumieć": {
+		Sg1: "tłumię", Sg2: "tłumisz", Sg3: "tłumi",
+		Pl1: "tłumimy", Pl2: "tłumicie", Pl3: "tłumią",
+	},
+
+	// patrzeć - action verb (patrzę, not patrzeję)
+	"patrzeć": {
+		Sg1: "patrzę", Sg2: "patrzysz", Sg3: "patrzy",
+		Pl1: "patrzymy", Pl2: "patrzycie", Pl3: "patrzą",
+	},
+
+	// -rwać verbs: use -ę/-ie pattern (not -am/-asz)
+	// rwać → rwę, derwać → derwę, wyrwać → wyrwę
+	"rwać": {
+		Sg1: "rwę", Sg2: "rwiesz", Sg3: "rwie",
+		Pl1: "rwiemy", Pl2: "rwiecie", Pl3: "rwą",
+	},
+
+	// -zwać verbs: use -ę/-ie pattern
+	// zwać → zwę, nazwać → nazwę, wezwać → wezwę
+	"zwać": {
+		Sg1: "zwę", Sg2: "zwiesz", Sg3: "zwie",
+		Pl1: "zwiemy", Pl2: "zwiecie", Pl3: "zwą",
+	},
+
+	// dbać - regular -am (not alternating like other -bać)
+	"dbać": {
+		Sg1: "dbam", Sg2: "dbasz", Sg3: "dba",
+		Pl1: "dbamy", Pl2: "dbacie", Pl3: "dbają",
+	},
+
+	// śmiać się - special pattern (ać → eję)
+	"śmiać": {
+		Sg1: "śmieję", Sg2: "śmiejesz", Sg3: "śmieje",
+		Pl1: "śmiejemy", Pl2: "śmiejecie", Pl3: "śmieją",
+	},
+
+	// -ieć action verbs (cierpieć, pachnieć, wisieć, tkwieć, etc.)
+	"cierpieć": {
+		Sg1: "cierpię", Sg2: "cierpisz", Sg3: "cierpi",
+		Pl1: "cierpimy", Pl2: "cierpicie", Pl3: "cierpią",
+	},
+	"wisieć": {
+		Sg1: "wiszę", Sg2: "wisisz", Sg3: "wisi",
+		Pl1: "wisimy", Pl2: "wisicie", Pl3: "wiszą",
+	},
+	"tkwieć": {
+		Sg1: "tkwię", Sg2: "tkwisz", Sg3: "tkwi",
+		Pl1: "tkwimy", Pl2: "tkwicie", Pl3: "tkwią",
+	},
+	"śmierdzieć": {
+		Sg1: "śmierdzę", Sg2: "śmierdzisz", Sg3: "śmierdzi",
+		Pl1: "śmierdzimy", Pl2: "śmierdzicie", Pl3: "śmierdzą",
+	},
+
+	// jeździć - correct softening źdź → żdż
+	"jeździć": {
+		Sg1: "jeżdżę", Sg2: "jeździsz", Sg3: "jeździ",
+		Pl1: "jeździmy", Pl2: "jeździcie", Pl3: "jeżdżą",
+	},
+
+	// -nieć action verbs (pachnieć, etc.)
+	"pachnieć": {
+		Sg1: "pachnę", Sg2: "pachniesz", Sg3: "pachnie",
+		Pl1: "pachniemy", Pl2: "pachniecie", Pl3: "pachną",
+	},
+
+	// -strzec verbs: c→g alternation (not c→k)
+	"strzec": {
+		Sg1: "strzegę", Sg2: "strzeżesz", Sg3: "strzeże",
+		Pl1: "strzeżemy", Pl2: "strzeżecie", Pl3: "strzegą",
+	},
+
+	// -chować verbs: use -owam (not -uję)
+	"chować": {
+		Sg1: "chowam", Sg2: "chowasz", Sg3: "chowa",
+		Pl1: "chowamy", Pl2: "chowacie", Pl3: "chowają",
+	},
+
+	// okazać - minority alternating -zać (z→ż)
+	"okazać": {
+		Sg1: "okażę", Sg2: "okażesz", Sg3: "okaże",
+		Pl1: "okażemy", Pl2: "okażecie", Pl3: "okażą",
+	},
+
+	// karać - minority alternating -rać (r→rz)
+	"karać": {
+		Sg1: "karzę", Sg2: "karzesz", Sg3: "karze",
+		Pl1: "karzemy", Pl2: "karzecie", Pl3: "karzą",
+	},
+
+	// -kraść verbs: suppletive kradn- stem
+	"kraść": {
+		Sg1: "kradnę", Sg2: "kradniesz", Sg3: "kradnie",
+		Pl1: "kradniemy", Pl2: "kradniecie", Pl3: "kradną",
+	},
+
+	// -kłaść verbs: suppletive kład- stem
+	"kłaść": {
+		Sg1: "kładę", Sg2: "kładziesz", Sg3: "kładzie",
+		Pl1: "kładziemy", Pl2: "kładziecie", Pl3: "kładą",
+	},
+
+	// uczcić - needs szcz (not szc)
+	"uczcić": {
+		Sg1: "uczczę", Sg2: "uczcisz", Sg3: "uczci",
+		Pl1: "uczcimy", Pl2: "uczcicie", Pl3: "uczczą",
+	},
+
+	// wspomnieć - special prefix form (w + historical root)
+	"wspomnieć": {
+		Sg1: "wspomnę", Sg2: "wspomnisz", Sg3: "wspomni",
+		Pl1: "wspomnimy", Pl2: "wspomnicie", Pl3: "wspomną",
+	},
+
+	// opisać - minority alternating -sać
+	"opisać": {
+		Sg1: "opiszę", Sg2: "opiszesz", Sg3: "opisze",
+		Pl1: "opiszemy", Pl2: "opiszecie", Pl3: "opiszą",
+	},
+
+	// wskazać - minority alternating -zać
+	"wskazać": {
+		Sg1: "wskażę", Sg2: "wskażesz", Sg3: "wskaże",
+		Pl1: "wskażemy", Pl2: "wskażecie", Pl3: "wskażą",
+	},
 }
 
 // lookupIrregular checks if a verb has an irregular paradigm.
@@ -149,7 +433,7 @@ var irregularBases = map[string]string{
 // Common prefixes in Polish
 var verbPrefixes = []string{
 	"prze", "przy", "roz", "roze", "wy", "za", "na", "po", "do", "od", "ode", "ob", "obe",
-	"pod", "pode", "nad", "nade", "wz", "wze", "u", "s", "z", "ze", "w", "we",
+	"pod", "pode", "nad", "nade", "wz", "wze", "u", "s", "z", "ze", "w", "we", "o",
 }
 
 // lookupIrregularWithPrefix tries to find an irregular verb,
@@ -168,6 +452,18 @@ func lookupIrregularWithPrefix(infinitive string) (PresentTense, bool) {
 		"czesać": true, "kasać": true, "ciosać": true, "ciesać": true,
 		"skakać": true, "płakać": true, "wiązać": true, "kazać": true,
 		"mazać": true, "lizać": true, "kołysać": true, "krzesać": true,
+		"naleźć": true, "spać": true, "bać": true, "dziać": true,
+		"podobać": true,
+		// Monosyllabic verbs
+		"bić": true, "lić": true, "pić": true, "żyć": true, "myć": true,
+		"ryć": true, "szyć": true, "wyć": true, "kryć": true,
+		// Other prefixable bases
+		"pomnieć": true, "mrzeć": true, "ciec": true, "woleć": true,
+		"jąć": true, "cząć": true, "patrzeć": true,
+		"rwać": true, "zwać": true, "dbać": true, "śmiać": true,
+		"cierpieć": true, "wisieć": true, "jeździć": true,
+		"pachnieć": true, "strzec": true, "chować": true,
+		"okazać": true, "karać": true, "kraść": true, "kłaść": true,
 	}
 
 	for _, prefix := range verbPrefixes {

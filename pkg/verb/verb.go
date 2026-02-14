@@ -128,6 +128,8 @@ var heuristics = []heuristic{
 	heuristicIc,
 	// -yć verbs: myć → myję
 	heuristicYc,
+	// -uć verbs: czuć → czuję
+	heuristicUc,
 	// -eć verbs: umieć → umiem
 	heuristicEc,
 	// Regular -ać verbs: czytać → czytam (fallback for -ać)
@@ -977,7 +979,22 @@ func heuristicIc(infinitive string) (PresentTense, bool) {
 	}
 	stem := strings.TrimSuffix(infinitive, "ić")
 
+	// Stems ending in vowel (maić, kroić, taić): i→j before ę/ą only
+	// maić → maję, maisz, mai, maimy, maicie, mają
+	// kroić → kroję, kroisz, kroi, kroimy, kroicie, kroją
+	if endsInVowel(stem) {
+		return PresentTense{
+			Sg1: stem + "ję",
+			Sg2: stem + "isz",
+			Sg3: stem + "i",
+			Pl1: stem + "imy",
+			Pl2: stem + "icie",
+			Pl3: stem + "ją",
+		}, true
+	}
+
 	// Monosyllabic stems (pić, bić, lić) use j-insertion: pić → piję
+	// These are now handled as irregulars, but keep this as fallback
 	runeCount := len([]rune(stem))
 	if runeCount <= 2 {
 		return PresentTense{
@@ -1068,6 +1085,24 @@ func heuristicYc(infinitive string) (PresentTense, bool) {
 	}, true
 }
 
+// heuristicUc handles -uć verbs.
+// czuć → czuję, czujesz, czuje... (j-insertion)
+// kłuć → kłuję, psuć → psuję, pruć → pruję
+func heuristicUc(infinitive string) (PresentTense, bool) {
+	if !strings.HasSuffix(infinitive, "uć") {
+		return PresentTense{}, false
+	}
+	stem := strings.TrimSuffix(infinitive, "ć") // keeps 'u'
+	return PresentTense{
+		Sg1: stem + "ję",
+		Sg2: stem + "jesz",
+		Sg3: stem + "je",
+		Pl1: stem + "jemy",
+		Pl2: stem + "jecie",
+		Pl3: stem + "ją",
+	}, true
+}
+
 // heuristicEc handles -eć verbs.
 // Most -ieć verbs: biednieć → biednieję (891 verbs go to -ieję)
 // Few -ieć exceptions: umieć → umiem (26 verbs go to -iem)
@@ -1127,9 +1162,48 @@ func heuristicEc(infinitive string) (PresentTense, bool) {
 				Pl3: stem + "ą",
 			}, true
 		}
-		// mieć is suppletive - skip, let it fail (needs lookup table)
-		if infinitive == "mieć" || strings.HasSuffix(infinitive, "mieć") && !strings.HasSuffix(infinitive, "umieć") {
+		// mieć is suppletive - skip, let it fail (handled by irregulars)
+		if infinitive == "mieć" {
 			return PresentTense{}, false
+		}
+		// -idzieć verbs (widzieć family): use -ę/-isz pattern
+		// widzieć → widzę, nienawidzieć → nienawidzę
+		if strings.HasSuffix(infinitive, "idzieć") {
+			stem := strings.TrimSuffix(infinitive, "ieć")
+			return PresentTense{
+				Sg1: stem + "ę",
+				Sg2: stem + "isz",
+				Sg3: stem + "i",
+				Pl1: stem + "imy",
+				Pl2: stem + "icie",
+				Pl3: stem + "ą",
+			}, true
+		}
+		// -edzieć verbs (siedzieć family): use -ę/-isz pattern
+		// siedzieć → siedzę
+		if strings.HasSuffix(infinitive, "edzieć") {
+			stem := strings.TrimSuffix(infinitive, "ieć")
+			return PresentTense{
+				Sg1: stem + "ę",
+				Sg2: stem + "isz",
+				Sg3: stem + "i",
+				Pl1: stem + "imy",
+				Pl2: stem + "icie",
+				Pl3: stem + "ą",
+			}, true
+		}
+		// -lecieć verbs: use -ę/-isz pattern
+		// lecieć → lecę, polecieć → polecę
+		if strings.HasSuffix(infinitive, "lecieć") {
+			stem := strings.TrimSuffix(infinitive, "ieć")
+			return PresentTense{
+				Sg1: stem + "ę",
+				Sg2: stem + "isz",
+				Sg3: stem + "i",
+				Pl1: stem + "imy",
+				Pl2: stem + "icie",
+				Pl3: stem + "ą",
+			}, true
 		}
 		// Standard -ieć → -ieję pattern
 		stem := strings.TrimSuffix(infinitive, "ć")
@@ -1144,16 +1218,55 @@ func heuristicEc(infinitive string) (PresentTense, bool) {
 	}
 
 	// Verbs ending in soft consonant + -eć have two patterns:
-	// 1. -ę/-ysz for action verbs: leżeć → leżę, krzyczeć → krzyczę
+	// 1. -ę/-isz for action verbs: leżeć → leżę, myśleć → myślę
 	// 2. -eję/-ejesz for inchoative verbs: maleć → maleję, boleć → boleję
 	//
 	// Pattern by ending (based on corpus statistics):
-	// -żeć, -czeć, -rzeć: mostly -ę/-ysz (action verbs)
-	// -leć, -szeć: mostly -eję/-ejesz (inchoative verbs)
+	// -śleć: 80% use -ę (myśleć type) - action verbs
+	// -dzieć: 59% use -ę (widzieć, siedzieć) - action verbs
+	// -cieć: 85% use -eję, but lecieć uses -ę - mostly inchoative
+	// -szeć: 60% use -eję, but słyszeć uses -ę - mixed
+	// -żeć: 70% use -ę (leżeć type) - action verbs
+	// -rzeć: 55% use -ę (patrzeć type) - action verbs
 	stem := strings.TrimSuffix(infinitive, "eć")
 
-	// -leć and -szeć verbs are mostly inchoative → -eję pattern
-	if strings.HasSuffix(infinitive, "leć") || strings.HasSuffix(infinitive, "szeć") {
+	// -śleć verbs (myśleć family): mostly -ę/-isz (80%)
+	if strings.HasSuffix(infinitive, "śleć") {
+		return PresentTense{
+			Sg1: stem + "ę",
+			Sg2: stem + "isz",
+			Sg3: stem + "i",
+			Pl1: stem + "imy",
+			Pl2: stem + "icie",
+			Pl3: stem + "ą",
+		}, true
+	}
+
+	// -dzieć verbs: widzieć, siedzieć use -ę/-isz
+	// But -wiedzieć is handled above, and some use -eję
+	if strings.HasSuffix(infinitive, "idzieć") || strings.HasSuffix(infinitive, "edzieć") {
+		return PresentTense{
+			Sg1: stem + "ę",
+			Sg2: stem + "isz",
+			Sg3: stem + "i",
+			Pl1: stem + "imy",
+			Pl2: stem + "icie",
+			Pl3: stem + "ą",
+		}, true
+	}
+
+	// -cieć verbs: lecieć uses -ę/-isz, most others use -eję
+	if strings.HasSuffix(infinitive, "lecieć") {
+		return PresentTense{
+			Sg1: stem + "ę",
+			Sg2: stem + "isz",
+			Sg3: stem + "i",
+			Pl1: stem + "imy",
+			Pl2: stem + "icie",
+			Pl3: stem + "ą",
+		}, true
+	}
+	if strings.HasSuffix(infinitive, "cieć") {
 		stem := strings.TrimSuffix(infinitive, "ć")
 		return PresentTense{
 			Sg1: stem + "ję",
@@ -1165,7 +1278,43 @@ func heuristicEc(infinitive string) (PresentTense, bool) {
 		}, true
 	}
 
-	// -żeć, -czeć, -rzeć verbs are mostly action verbs → -ę/-ysz pattern
+	// -szeć verbs: słyszeć uses -ę/-ysz, most others use -eję
+	if strings.HasSuffix(infinitive, "słyszeć") {
+		return PresentTense{
+			Sg1: stem + "ę",
+			Sg2: stem + "ysz",
+			Sg3: stem + "y",
+			Pl1: stem + "ymy",
+			Pl2: stem + "ycie",
+			Pl3: stem + "ą",
+		}, true
+	}
+	if strings.HasSuffix(infinitive, "szeć") {
+		stem := strings.TrimSuffix(infinitive, "ć")
+		return PresentTense{
+			Sg1: stem + "ję",
+			Sg2: stem + "jesz",
+			Sg3: stem + "je",
+			Pl1: stem + "jemy",
+			Pl2: stem + "jecie",
+			Pl3: stem + "ją",
+		}, true
+	}
+
+	// Other -leć verbs (maleć, boleć) are mostly inchoative → -eję
+	if strings.HasSuffix(infinitive, "leć") {
+		stem := strings.TrimSuffix(infinitive, "ć")
+		return PresentTense{
+			Sg1: stem + "ję",
+			Sg2: stem + "jesz",
+			Sg3: stem + "je",
+			Pl1: stem + "jemy",
+			Pl2: stem + "jecie",
+			Pl3: stem + "ją",
+		}, true
+	}
+
+	// -żeć, -rzeć verbs are mostly action verbs → -ę/-ysz pattern
 	if endsInSoftConsonant(stem) {
 		return PresentTense{
 			Sg1: stem + "ę",
@@ -1207,6 +1356,21 @@ func heuristicAc(infinitive string) (PresentTense, bool) {
 }
 
 // Consonant alternation helpers
+
+// vowels in Polish (for stem-final detection)
+var polishVowels = map[rune]bool{
+	'a': true, 'e': true, 'i': true, 'o': true, 'u': true, 'y': true,
+	'ą': true, 'ę': true, 'ó': true,
+}
+
+// endsInVowel returns true if the stem ends in a vowel.
+func endsInVowel(stem string) bool {
+	runes := []rune(stem)
+	if len(runes) == 0 {
+		return false
+	}
+	return polishVowels[runes[len(runes)-1]]
+}
 
 // softConsonants are consonants (and digraphs) that are already "soft"
 // and don't undergo further alternation before front vowels.
