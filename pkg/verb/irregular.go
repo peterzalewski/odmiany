@@ -37,6 +37,40 @@ var homographs = map[string][]Paradigm{
 			Gloss: "to spread (bedding)",
 		},
 	},
+	// boleć: "physical pain" vs "to grieve/worry" (inchoative)
+	"boleć": {
+		{
+			PresentTense: PresentTense{
+				Sg1: "bolę", Sg2: "bolisz", Sg3: "boli",
+				Pl1: "bolimy", Pl2: "bolicie", Pl3: "bolą",
+			},
+			Gloss: "to hurt (physical pain)",
+		},
+		{
+			PresentTense: PresentTense{
+				Sg1: "boleję", Sg2: "bolejesz", Sg3: "boleje",
+				Pl1: "bolejemy", Pl2: "bolejecie", Pl3: "boleją",
+			},
+			Gloss: "to grieve, to worry",
+		},
+	},
+	// stajać: frequentative of stać (both patterns attested)
+	"stajać": {
+		{
+			PresentTense: PresentTense{
+				Sg1: "staję", Sg2: "stajesz", Sg3: "staje",
+				Pl1: "stajemy", Pl2: "stajecie", Pl3: "stają",
+			},
+			Gloss: "to keep standing/stopping (frequentative)",
+		},
+		{
+			PresentTense: PresentTense{
+				Sg1: "stajam", Sg2: "stajasz", Sg3: "staja",
+				Pl1: "stajamy", Pl2: "stajacie", Pl3: "stajają",
+			},
+			Gloss: "to keep standing/stopping (variant)",
+		},
+	},
 }
 
 // lookupHomograph returns all paradigms for a homograph verb.
@@ -534,10 +568,40 @@ var irregularVerbs = map[string]PresentTense{
 		Pl1: "dojrzejemy", Pl2: "dojrzejecie", Pl3: "dojrzeją",
 	},
 
-	// boleć - inchoative pattern (boleję not bolę)
-	"boleć": {
-		Sg1: "boleję", Sg2: "bolejesz", Sg3: "boleje",
-		Pl1: "bolejemy", Pl2: "bolejecie", Pl3: "boleją",
+	// boleć prefixed forms (base is homograph, handled separately)
+	// bolę pattern (physical pain): poboleć, rozboleć, zaboleć
+	"poboleć": {
+		Sg1: "pobolę", Sg2: "pobolisz", Sg3: "poboli",
+		Pl1: "pobolimy", Pl2: "pobolicie", Pl3: "pobolą",
+	},
+	"rozboleć": {
+		Sg1: "rozbolę", Sg2: "rozbolisz", Sg3: "rozboli",
+		Pl1: "rozbolimy", Pl2: "rozbolicie", Pl3: "rozbolą",
+	},
+	"zaboleć": {
+		Sg1: "zabolę", Sg2: "zabolisz", Sg3: "zaboli",
+		Pl1: "zabolimy", Pl2: "zabolicie", Pl3: "zabolą",
+	},
+	// boleję pattern (inchoative/emotional): oboleć, odboleć, przeboleć, współboleć, wyboleć
+	"oboleć": {
+		Sg1: "oboleję", Sg2: "obolejesz", Sg3: "oboleje",
+		Pl1: "obolejemy", Pl2: "obolejecie", Pl3: "oboleją",
+	},
+	"odboleć": {
+		Sg1: "odboleję", Sg2: "odbolejesz", Sg3: "odboleje",
+		Pl1: "odbolejemy", Pl2: "odbolejecie", Pl3: "odboleją",
+	},
+	"przeboleć": {
+		Sg1: "przeboleję", Sg2: "przebolejesz", Sg3: "przeboleje",
+		Pl1: "przebolejemy", Pl2: "przebolejecie", Pl3: "przeboleją",
+	},
+	"współboleć": {
+		Sg1: "współboleję", Sg2: "współbolejesz", Sg3: "współboleje",
+		Pl1: "współbolejemy", Pl2: "współbolejecie", Pl3: "współboleją",
+	},
+	"wyboleć": {
+		Sg1: "wyboleję", Sg2: "wybolejesz", Sg3: "wyboleje",
+		Pl1: "wybolejemy", Pl2: "wybolejecie", Pl3: "wyboleją",
 	},
 
 	// swędzieć - action verb (swędzę not swędzieję)
@@ -709,6 +773,33 @@ var irregularVerbs = map[string]PresentTense{
 		Sg1: "najmę", Sg2: "najmiesz", Sg3: "najmie",
 		Pl1: "najmiemy", Pl2: "najmiecie", Pl3: "najmą",
 	},
+
+	// tajać - minority -ajać with -ję pattern (taję not tajam)
+	"tajać": {
+		Sg1: "taję", Sg2: "tajesz", Sg3: "taje",
+		Pl1: "tajemy", Pl2: "tajecie", Pl3: "tają",
+	},
+
+	// ćpać - slang for drug use (regular -am pattern)
+	"ćpać": {
+		Sg1: "ćpam", Sg2: "ćpasz", Sg3: "ćpa",
+		Pl1: "ćpamy", Pl2: "ćpacie", Pl3: "ćpają",
+	},
+
+	// -tajać verbs meaning "to conceal" (from "taja"), use -tajam not -taję
+	// Different from tajać meaning "to thaw" which uses taję
+	"utajać": {
+		Sg1: "utajam", Sg2: "utajasz", Sg3: "utaja",
+		Pl1: "utajamy", Pl2: "utajacie", Pl3: "utajają",
+	},
+	"zatajać": {
+		Sg1: "zatajam", Sg2: "zatajasz", Sg3: "zataja",
+		Pl1: "zatajamy", Pl2: "zatajacie", Pl3: "zatajają",
+	},
+	"przytajać": {
+		Sg1: "przytajam", Sg2: "przytajasz", Sg3: "przytaja",
+		Pl1: "przytajamy", Pl2: "przytajacie", Pl3: "przytajają",
+	},
 }
 
 // lookupIrregular checks if a verb has an irregular paradigm.
@@ -779,6 +870,7 @@ func lookupIrregularWithPrefix(infinitive string) (PresentTense, bool) {
 		"starzeć": true, "gorzeć": true, "dorzeć": true, "dobrzeć": true,
 		"czcić": true, "kpić": true, "ulec": true, "wściec": true,
 		"dojrzeć": true, "boleć": true, "swędzieć": true,
+		"tajać": true, "ćpać": true,
 	}
 
 	for _, prefix := range verbPrefixes {

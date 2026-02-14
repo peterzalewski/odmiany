@@ -318,10 +318,42 @@ func isPrefixedRywac(infinitive string) bool {
 	// From grać: grywać, zagrywać, rozgrywać, etc.
 	// From kryć: krywać, ukrywać, odkrywać, etc.
 	// From srać: srywać, zasrywać, etc. (vulgar)
-	// NOT from orać: orywać, zaorywać → -uję
+	// NOT from orać: orywać, zaorywać, doorywać → -uję
 	// NOT from patrzeć: patrywać, przypatrywać → -uję
+	// NOT from other roots: skwirywać, babrywać, etc. → -uję
 
-	// Check for grywać, krywać, srywać patterns
+	// First check for -orywać pattern (from orać "to plow")
+	// These use -oruję, NOT -orywam
+	if strings.HasSuffix(infinitive, "orywać") {
+		return false
+	}
+
+	// -atrywać, -etrywać patterns (from patrzeć roots) → -uję
+	if strings.HasSuffix(infinitive, "atrywać") || strings.HasSuffix(infinitive, "etrywać") {
+		return false
+	}
+
+	// -chrywać pattern (rozczochrywać etc.) → -uję
+	if strings.HasSuffix(infinitive, "chrywać") {
+		return false
+	}
+
+	// -brywać pattern (rozbabrywać, etc.) → -uję
+	if strings.HasSuffix(infinitive, "brywać") {
+		return false
+	}
+
+	// -prywać pattern (rozpaprywać, etc.) → -uję
+	if strings.HasSuffix(infinitive, "prywać") {
+		return false
+	}
+
+	// -irywać pattern (doskwirywać, etc.) → -uję
+	if strings.HasSuffix(infinitive, "irywać") {
+		return false
+	}
+
+	// Check for grywać, krywać, srywać patterns (these ARE from rwać/grać/kryć/srać)
 	if strings.HasSuffix(infinitive, "grywać") ||
 		strings.HasSuffix(infinitive, "krywać") ||
 		strings.HasSuffix(infinitive, "srywać") ||
