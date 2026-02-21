@@ -20,6 +20,24 @@ type corpusEntry struct {
 	Aspect     string `json:"aspect"`
 }
 
+type pastCorpusEntry struct {
+	Infinitive string `json:"infinitive"`
+	Sg1M       string `json:"sg1m"`
+	Sg1F       string `json:"sg1f"`
+	Sg2M       string `json:"sg2m"`
+	Sg2F       string `json:"sg2f"`
+	Sg3M       string `json:"sg3m"`
+	Sg3F       string `json:"sg3f"`
+	Sg3N       string `json:"sg3n"`
+	Pl1V       string `json:"pl1v"`
+	Pl1NV      string `json:"pl1nv"`
+	Pl2V       string `json:"pl2v"`
+	Pl2NV      string `json:"pl2nv"`
+	Pl3V       string `json:"pl3v"`
+	Pl3NV      string `json:"pl3nv"`
+	Aspect     string `json:"aspect"`
+}
+
 func loadCorpus(t *testing.T) []corpusEntry {
 	t.Helper()
 	data, err := os.ReadFile("testdata/verbs.json")
@@ -29,6 +47,19 @@ func loadCorpus(t *testing.T) []corpusEntry {
 	var entries []corpusEntry
 	if err := json.Unmarshal(data, &entries); err != nil {
 		t.Fatalf("failed to parse corpus: %v", err)
+	}
+	return entries
+}
+
+func loadPastCorpus(t *testing.T) []pastCorpusEntry {
+	t.Helper()
+	data, err := os.ReadFile("testdata/verbs_past.json")
+	if err != nil {
+		t.Fatalf("failed to load past corpus: %v", err)
+	}
+	var entries []pastCorpusEntry
+	if err := json.Unmarshal(data, &entries); err != nil {
+		t.Fatalf("failed to parse past corpus: %v", err)
 	}
 	return entries
 }
@@ -202,6 +233,164 @@ func TestSampleVerbs(t *testing.T) {
 		} else {
 			t.Logf("%s: ✗ got %s, %s, %s; want %s, %s, %s",
 				inf, got.Sg1, got.Sg2, got.Sg3, e.Sg1, e.Sg2, e.Sg3)
+		}
+	}
+}
+
+func TestCorpusPastAccuracy(t *testing.T) {
+	entries := loadPastCorpus(t)
+
+	// Group corpus entries by infinitive to handle variants
+	byInfinitive := make(map[string][]PastTense)
+	for _, e := range entries {
+		pt := PastTense{
+			Sg1M: e.Sg1M, Sg1F: e.Sg1F,
+			Sg2M: e.Sg2M, Sg2F: e.Sg2F,
+			Sg3M: e.Sg3M, Sg3F: e.Sg3F, Sg3N: e.Sg3N,
+			Pl1V: e.Pl1V, Pl1NV: e.Pl1NV,
+			Pl2V: e.Pl2V, Pl2NV: e.Pl2NV,
+			Pl3V: e.Pl3V, Pl3NV: e.Pl3NV,
+		}
+		byInfinitive[e.Infinitive] = append(byInfinitive[e.Infinitive], pt)
+	}
+
+	var passed, failed, noMatch int
+	failures := make(map[string]int) // pattern -> count
+
+	for infinitive, corpusParadigms := range byInfinitive {
+		paradigms, err := ConjugatePast(infinitive)
+		if err != nil {
+			noMatch++
+			pattern := classifyFailure(infinitive, "no_match")
+			failures[pattern]++
+			continue
+		}
+
+		// Check if ANY of our paradigms matches ANY corpus paradigm
+		anyMatch := false
+		for _, ourP := range paradigms {
+			for _, corpusP := range corpusParadigms {
+				if ourP.PastTense.Equals(corpusP) {
+					anyMatch = true
+					break
+				}
+			}
+			if anyMatch {
+				break
+			}
+		}
+
+		if anyMatch {
+			passed++
+		} else {
+			failed++
+			pattern := classifyFailure(infinitive, describePastError(infinitive, corpusParadigms[0], paradigms[0].PastTense))
+			failures[pattern]++
+		}
+	}
+
+	total := len(byInfinitive)
+	accuracy := float64(passed) / float64(total) * 100
+
+	t.Logf("Past tense corpus accuracy: %.2f%% (%d/%d passed, %d failed, %d no match)",
+		accuracy, passed, total, failed, noMatch)
+
+	// Print top failure patterns
+	type failurePattern struct {
+		pattern string
+		count   int
+	}
+	var patterns []failurePattern
+	for p, c := range failures {
+		patterns = append(patterns, failurePattern{p, c})
+	}
+	sort.Slice(patterns, func(i, j int) bool {
+		return patterns[i].count > patterns[j].count
+	})
+
+	t.Log("\nTop failure patterns:")
+	for i, p := range patterns {
+		if i >= 20 {
+			break
+		}
+		t.Logf("  %4d: %s", p.count, p.pattern)
+	}
+}
+
+// describePastError returns a short description of how the past conjugation differs.
+func describePastError(infinitive string, expected, got PastTense) string {
+	var diffs []string
+
+	if expected.Sg3M != got.Sg3M {
+		diffs = append(diffs, fmt.Sprintf("3sgM: want %s got %s", ending(expected.Sg3M), ending(got.Sg3M)))
+	}
+	if expected.Sg3F != got.Sg3F {
+		diffs = append(diffs, fmt.Sprintf("3sgF: want %s got %s", ending(expected.Sg3F), ending(got.Sg3F)))
+	}
+	if expected.Pl3V != got.Pl3V {
+		diffs = append(diffs, fmt.Sprintf("3plV: want %s got %s", ending(expected.Pl3V), ending(got.Pl3V)))
+	}
+
+	if len(diffs) > 2 {
+		return diffs[0] // Just show the first difference
+	}
+	return strings.Join(diffs, "; ")
+}
+
+// TestSamplePastVerbs tests specific verbs to understand past tense patterns.
+func TestSamplePastVerbs(t *testing.T) {
+	entries := loadPastCorpus(t)
+
+	// Build a map for quick lookup
+	corpus := make(map[string]pastCorpusEntry)
+	for _, e := range entries {
+		corpus[e.Infinitive] = e
+	}
+
+	samples := []string{
+		"czytać", "pisać", "robić", "brać", "być", "mieć",
+		"pracować", "umieć", "myć", "żyć", "pić",
+		"nieść", "móc", "chcieć", "iść", "wziąć",
+		"ciągnąć", "kopnąć",
+	}
+
+	for _, inf := range samples {
+		e, ok := corpus[inf]
+		if !ok {
+			t.Logf("%s: not in corpus", inf)
+			continue
+		}
+
+		expected := PastTense{
+			Sg1M: e.Sg1M, Sg1F: e.Sg1F,
+			Sg2M: e.Sg2M, Sg2F: e.Sg2F,
+			Sg3M: e.Sg3M, Sg3F: e.Sg3F, Sg3N: e.Sg3N,
+			Pl1V: e.Pl1V, Pl1NV: e.Pl1NV,
+			Pl2V: e.Pl2V, Pl2NV: e.Pl2NV,
+			Pl3V: e.Pl3V, Pl3NV: e.Pl3NV,
+		}
+
+		paradigms, err := ConjugatePast(inf)
+		if err != nil {
+			t.Logf("%s: no match (expected: %s, %s, %s...)", inf, e.Sg3M, e.Sg3F, e.Sg3N)
+			continue
+		}
+
+		// Check if any paradigm matches
+		anyMatch := false
+		for _, p := range paradigms {
+			if p.PastTense.Equals(expected) {
+				anyMatch = true
+				break
+			}
+		}
+
+		got := paradigms[0].PastTense
+		if anyMatch {
+			t.Logf("%s: ✓ %s, %s, %s, %s, %s", inf, got.Sg3M, got.Sg3F, got.Sg3N, got.Pl3V, got.Pl3NV)
+		} else {
+			t.Logf("%s: ✗ got %s/%s/%s want %s/%s/%s",
+				inf, got.Sg3M, got.Sg3F, got.Sg3N, e.Sg3M, e.Sg3F, e.Sg3N)
 		}
 	}
 }

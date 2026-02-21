@@ -60,6 +60,92 @@ func (p PresentTense) Equals(other PresentTense) bool {
 		p.Pl3 == other.Pl3
 }
 
+// Gender represents grammatical gender for past tense conjugation.
+type Gender int
+
+const (
+	Masculine Gender = iota + 1
+	Feminine
+	Neuter
+	MascPersonal    // masculine-personal (virile) - plural only
+	NonMascPersonal // non-masculine-personal - plural only
+)
+
+// PastTense holds all 13 forms of the past tense paradigm.
+// Past tense distinguishes gender: masculine/feminine/neuter in singular,
+// masculine-personal (virile) / non-masculine-personal in plural.
+type PastTense struct {
+	// Singular - ja (1st person)
+	Sg1M string // ja (masculine) - czytałem
+	Sg1F string // ja (feminine) - czytałam
+	// Singular - ty (2nd person)
+	Sg2M string // ty (masculine) - czytałeś
+	Sg2F string // ty (feminine) - czytałaś
+	// Singular - on/ona/ono (3rd person)
+	Sg3M string // on (masculine) - czytał
+	Sg3F string // ona (feminine) - czytała
+	Sg3N string // ono (neuter) - czytało
+	// Plural - my (1st person)
+	Pl1V  string // my (masculine-personal/virile) - czytaliśmy
+	Pl1NV string // my (non-masculine-personal) - czytałyśmy
+	// Plural - wy (2nd person)
+	Pl2V  string // wy (masculine-personal) - czytaliście
+	Pl2NV string // wy (non-masculine-personal) - czytałyście
+	// Plural - oni/one (3rd person)
+	Pl3V  string // oni (masculine-personal) - czytali
+	Pl3NV string // one (non-masculine-personal) - czytały
+}
+
+// Get returns the form for the given person, number, and gender.
+func (p PastTense) Get(person Person, number Number, gender Gender) string {
+	switch {
+	case person == First && number == Singular && gender == Masculine:
+		return p.Sg1M
+	case person == First && number == Singular && gender == Feminine:
+		return p.Sg1F
+	case person == Second && number == Singular && gender == Masculine:
+		return p.Sg2M
+	case person == Second && number == Singular && gender == Feminine:
+		return p.Sg2F
+	case person == Third && number == Singular && gender == Masculine:
+		return p.Sg3M
+	case person == Third && number == Singular && gender == Feminine:
+		return p.Sg3F
+	case person == Third && number == Singular && gender == Neuter:
+		return p.Sg3N
+	case person == First && number == Plural && gender == MascPersonal:
+		return p.Pl1V
+	case person == First && number == Plural && gender == NonMascPersonal:
+		return p.Pl1NV
+	case person == Second && number == Plural && gender == MascPersonal:
+		return p.Pl2V
+	case person == Second && number == Plural && gender == NonMascPersonal:
+		return p.Pl2NV
+	case person == Third && number == Plural && gender == MascPersonal:
+		return p.Pl3V
+	case person == Third && number == Plural && gender == NonMascPersonal:
+		return p.Pl3NV
+	default:
+		return ""
+	}
+}
+
+// Equals returns true if two past tense paradigms are identical.
+func (p PastTense) Equals(other PastTense) bool {
+	return p.Sg1M == other.Sg1M && p.Sg1F == other.Sg1F &&
+		p.Sg2M == other.Sg2M && p.Sg2F == other.Sg2F &&
+		p.Sg3M == other.Sg3M && p.Sg3F == other.Sg3F && p.Sg3N == other.Sg3N &&
+		p.Pl1V == other.Pl1V && p.Pl1NV == other.Pl1NV &&
+		p.Pl2V == other.Pl2V && p.Pl2NV == other.Pl2NV &&
+		p.Pl3V == other.Pl3V && p.Pl3NV == other.Pl3NV
+}
+
+// PastParadigm represents a past tense conjugation paradigm with optional gloss.
+type PastParadigm struct {
+	PastTense
+	Gloss string
+}
+
 // Paradigm represents a conjugation paradigm with an optional gloss.
 // Homographs (verbs with multiple meanings) have multiple paradigms.
 type Paradigm struct {

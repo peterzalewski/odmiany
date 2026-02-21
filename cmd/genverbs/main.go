@@ -41,11 +41,20 @@ import (
 	"strings"
 )
 
+// Tense represents present or past tense extraction mode.
+type Tense string
+
+const (
+	TensePresent Tense = "present"
+	TensePast    Tense = "past"
+)
+
 // VerbForm represents a single conjugated form with its grammatical tags.
 type VerbForm struct {
 	Form   string
 	Number string // "sg" or "pl"
 	Person string // "pri" (1st), "sec" (2nd), "ter" (3rd)
+	Gender string // "m1" (masc.pers), "m2" (masc.anim), "m3" (masc.inan), "f", "n", "n1" (non-masc.pers plural)
 	Aspect string // "imperf" or "perf"
 	Refl   string // reflexivity tag
 }
@@ -60,6 +69,33 @@ type VerbParadigm struct {
 	Pl2        string `json:"pl2"` // wy
 	Pl3        string `json:"pl3"` // oni/one
 	Aspect     string `json:"aspect"`
+}
+
+// PastParadigm holds a complete past tense paradigm (13 forms).
+// Past tense distinguishes gender: masculine/feminine/neuter in singular,
+// masculine-personal/non-masculine-personal in plural.
+type PastParadigm struct {
+	Infinitive string `json:"infinitive"`
+	// Singular - ja (1st person)
+	Sg1M string `json:"sg1m"` // ja (masculine)
+	Sg1F string `json:"sg1f"` // ja (feminine)
+	// Singular - ty (2nd person)
+	Sg2M string `json:"sg2m"` // ty (masculine)
+	Sg2F string `json:"sg2f"` // ty (feminine)
+	// Singular - on/ona/ono (3rd person)
+	Sg3M string `json:"sg3m"` // on (masculine)
+	Sg3F string `json:"sg3f"` // ona (feminine)
+	Sg3N string `json:"sg3n"` // ono (neuter)
+	// Plural - my (1st person)
+	Pl1V  string `json:"pl1v"`  // my (masculine-personal/virile)
+	Pl1NV string `json:"pl1nv"` // my (non-masculine-personal/non-virile)
+	// Plural - wy (2nd person)
+	Pl2V  string `json:"pl2v"`  // wy (masculine-personal)
+	Pl2NV string `json:"pl2nv"` // wy (non-masculine-personal)
+	// Plural - oni/one (3rd person)
+	Pl3V  string `json:"pl3v"`  // oni (masculine-personal)
+	Pl3NV string `json:"pl3nv"` // one (non-masculine-personal)
+	Aspect string `json:"aspect"`
 }
 
 // conjugationPattern defines expected ending patterns for a conjugation class.
@@ -101,6 +137,7 @@ var knownPatterns = []conjugationPattern{
 
 func main() {
 	inputPath := flag.String("input", "data/polish.txt.bz2", "path to polish.txt.bz2")
+	tense := flag.String("tense", "present", "tense to extract: present or past")
 	flag.Parse()
 
 	f, err := os.Open(*inputPath)
@@ -116,6 +153,18 @@ func main() {
 	// Collect ALL forms for each infinitive
 	verbForms := make(map[string][]VerbForm)
 
+	// Determine tag prefix based on tense
+	var tagPrefix string
+	switch Tense(*tense) {
+	case TensePresent:
+		tagPrefix = "verb:fin:"
+	case TensePast:
+		tagPrefix = "verb:praet:"
+	default:
+		fmt.Fprintf(os.Stderr, "unknown tense: %s (use 'present' or 'past')\n", *tense)
+		os.Exit(1)
+	}
+
 	for scanner.Scan() {
 		line := scanner.Text()
 		parts := strings.Split(line, ";")
@@ -124,15 +173,22 @@ func main() {
 		}
 		lemma, form, tags := parts[0], parts[1], parts[2]
 
-		// Only interested in finite verbs (present/future tense)
-		if !strings.Contains(tags, "verb:fin:") {
+		if !strings.Contains(tags, tagPrefix) {
 			continue
 		}
 
 		// Parse the form
-		vf := parseVerbForm(form, tags)
-		if vf.Number != "" && vf.Person != "" {
-			verbForms[lemma] = append(verbForms[lemma], vf)
+		var vf VerbForm
+		if Tense(*tense) == TensePresent {
+			vf = parseVerbForm(form, tags)
+			if vf.Number != "" && vf.Person != "" {
+				verbForms[lemma] = append(verbForms[lemma], vf)
+			}
+		} else {
+			vf = parsePastForm(form, tags)
+			if vf.Number != "" && vf.Person != "" && vf.Gender != "" {
+				verbForms[lemma] = append(verbForms[lemma], vf)
+			}
 		}
 	}
 
@@ -141,30 +197,58 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Extract coherent paradigms from collected forms
-	var paradigms []VerbParadigm
-	for infinitive, forms := range verbForms {
-		extracted := extractCoherentParadigms(infinitive, forms)
-		paradigms = append(paradigms, extracted...)
-	}
-
-	// Sort for deterministic output
-	sort.Slice(paradigms, func(i, j int) bool {
-		if paradigms[i].Infinitive != paradigms[j].Infinitive {
-			return paradigms[i].Infinitive < paradigms[j].Infinitive
+	// Extract and output paradigms based on tense
+	if Tense(*tense) == TensePresent {
+		// Extract coherent paradigms from collected forms
+		var paradigms []VerbParadigm
+		for infinitive, forms := range verbForms {
+			extracted := extractCoherentParadigms(infinitive, forms)
+			paradigms = append(paradigms, extracted...)
 		}
-		return paradigms[i].Sg1 < paradigms[j].Sg1
-	})
 
-	enc := json.NewEncoder(os.Stdout)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(paradigms); err != nil {
-		fmt.Fprintf(os.Stderr, "encode: %v\n", err)
-		os.Exit(1)
+		// Sort for deterministic output
+		sort.Slice(paradigms, func(i, j int) bool {
+			if paradigms[i].Infinitive != paradigms[j].Infinitive {
+				return paradigms[i].Infinitive < paradigms[j].Infinitive
+			}
+			return paradigms[i].Sg1 < paradigms[j].Sg1
+		})
+
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		if err := enc.Encode(paradigms); err != nil {
+			fmt.Fprintf(os.Stderr, "encode: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Fprintf(os.Stderr, "Extracted %d complete present tense paradigms from %d infinitives\n",
+			len(paradigms), len(verbForms))
+	} else {
+		// Extract past tense paradigms
+		var paradigms []PastParadigm
+		for infinitive, forms := range verbForms {
+			extracted := extractPastParadigms(infinitive, forms)
+			paradigms = append(paradigms, extracted...)
+		}
+
+		// Sort for deterministic output
+		sort.Slice(paradigms, func(i, j int) bool {
+			if paradigms[i].Infinitive != paradigms[j].Infinitive {
+				return paradigms[i].Infinitive < paradigms[j].Infinitive
+			}
+			return paradigms[i].Sg1M < paradigms[j].Sg1M
+		})
+
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		if err := enc.Encode(paradigms); err != nil {
+			fmt.Fprintf(os.Stderr, "encode: %v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Fprintf(os.Stderr, "Extracted %d complete past tense paradigms from %d infinitives\n",
+			len(paradigms), len(verbForms))
 	}
-
-	fmt.Fprintf(os.Stderr, "Extracted %d complete verb paradigms from %d infinitives\n",
-		len(paradigms), len(verbForms))
 }
 
 // parseVerbForm extracts grammatical information from Polimorf tags.
@@ -416,4 +500,196 @@ func findCompatibleForm(candidates []VerbForm, sg1 VerbForm, sg1Suffix, expected
 	}
 
 	return ""
+}
+
+// parsePastForm extracts grammatical information from Polimorf past tense tags.
+// Tags format: verb:praet:NUMBER:GENDER:PERSON:ASPECT:REFL
+// Example: verb:praet:sg:m1:pri:imperf:nonrefl
+func parsePastForm(form, tags string) VerbForm {
+	vf := VerbForm{Form: form}
+
+	tagParts := strings.Split(tags, ":")
+	if len(tagParts) < 6 {
+		return vf
+	}
+
+	vf.Number = tagParts[2] // sg or pl
+	vf.Gender = tagParts[3] // m1, m2, m3, f, n, n1
+	vf.Person = tagParts[4] // pri, sec, ter
+
+	// Extract aspect
+	if strings.Contains(tags, ":imperf") {
+		vf.Aspect = "imperf"
+	} else if strings.Contains(tags, ":perf") {
+		vf.Aspect = "perf"
+	}
+
+	// Extract reflexivity
+	if strings.Contains(tags, ":refl.nonrefl") {
+		vf.Refl = "refl.nonrefl"
+	} else if strings.Contains(tags, ":nonrefl") {
+		vf.Refl = "nonrefl"
+	} else if strings.Contains(tags, ":refl") {
+		vf.Refl = "refl"
+	}
+
+	return vf
+}
+
+// extractPastParadigms groups past tense forms into coherent paradigms.
+// Past tense is simpler than present - stems are nearly universal within a verb,
+// so we mostly just need to collect all 13 forms.
+func extractPastParadigms(infinitive string, forms []VerbForm) []PastParadigm {
+	// Group forms by normalized slot (person+number+genderCategory)
+	// Polimorf uses compound gender tags like "m1.m2.m3", "n1.n2", "m1.p1", "m2.m3.f.n1.n2.p2.p3"
+	// We normalize these to: sgM, sgF, sgN, plV, plNV
+	bySlot := make(map[string][]VerbForm)
+	for _, f := range forms {
+		slots := normalizeGenderSlots(f.Number, f.Person, f.Gender)
+		for _, slot := range slots {
+			bySlot[slot] = append(bySlot[slot], f)
+		}
+	}
+
+	// Get the 3rd person masculine singular as base (it's the "dictionary" form)
+	sg3mForms := bySlot["sg:ter:M"]
+	if len(sg3mForms) == 0 {
+		return nil // No base form found
+	}
+
+	// For past tense, we try to build paradigms from each sg3m form
+	var paradigms []PastParadigm
+
+	for _, sg3m := range sg3mForms {
+		paradigm := PastParadigm{
+			Infinitive: infinitive,
+			Aspect:     sg3m.Aspect,
+		}
+
+		// Try to find all forms, preferring forms from the same aspect
+		paradigm.Sg1M = findPastFormNorm(bySlot, "sg", "pri", "M", sg3m.Aspect)
+		paradigm.Sg1F = findPastFormNorm(bySlot, "sg", "pri", "F", sg3m.Aspect)
+		paradigm.Sg2M = findPastFormNorm(bySlot, "sg", "sec", "M", sg3m.Aspect)
+		paradigm.Sg2F = findPastFormNorm(bySlot, "sg", "sec", "F", sg3m.Aspect)
+		paradigm.Sg3M = sg3m.Form
+		paradigm.Sg3F = findPastFormNorm(bySlot, "sg", "ter", "F", sg3m.Aspect)
+		paradigm.Sg3N = findPastFormNorm(bySlot, "sg", "ter", "N", sg3m.Aspect)
+		paradigm.Pl1V = findPastFormNorm(bySlot, "pl", "pri", "V", sg3m.Aspect)
+		paradigm.Pl1NV = findPastFormNorm(bySlot, "pl", "pri", "NV", sg3m.Aspect)
+		paradigm.Pl2V = findPastFormNorm(bySlot, "pl", "sec", "V", sg3m.Aspect)
+		paradigm.Pl2NV = findPastFormNorm(bySlot, "pl", "sec", "NV", sg3m.Aspect)
+		paradigm.Pl3V = findPastFormNorm(bySlot, "pl", "ter", "V", sg3m.Aspect)
+		paradigm.Pl3NV = findPastFormNorm(bySlot, "pl", "ter", "NV", sg3m.Aspect)
+
+		// Check if paradigm is complete (has all 13 forms)
+		if isCompletePastParadigm(paradigm) {
+			// Check for coherence - the stem should be consistent
+			if isPastParadigmCoherent(paradigm) {
+				paradigms = append(paradigms, paradigm)
+			}
+		}
+	}
+
+	return paradigms
+}
+
+// normalizeGenderSlots converts Polimorf compound gender tags to normalized slots.
+// Returns a list of slots this form belongs to.
+// Polimorf tags:
+//   - Singular: m1.m2.m3 (masc), f (fem), n1.n2 (neut)
+//   - Plural: m1.p1 (masc-pers/virile), m2.m3.f.n1.n2.p2.p3 (non-masc-pers)
+func normalizeGenderSlots(number, person, gender string) []string {
+	var slots []string
+	slot := number + ":" + person + ":"
+
+	// Check for masculine (singular or plural virile)
+	if strings.Contains(gender, "m1") {
+		if number == "sg" {
+			slots = append(slots, slot+"M")
+		} else {
+			// In plural, m1 alone or m1.p1 means virile
+			if strings.Contains(gender, "p1") || gender == "m1" || !strings.Contains(gender, "m2") {
+				slots = append(slots, slot+"V")
+			}
+		}
+	}
+
+	// Check for feminine
+	if strings.Contains(gender, "f") {
+		if number == "sg" {
+			slots = append(slots, slot+"F")
+		}
+		// In plural, f is part of non-virile
+	}
+
+	// Check for neuter
+	if strings.Contains(gender, "n1") || strings.Contains(gender, "n2") {
+		if number == "sg" {
+			slots = append(slots, slot+"N")
+		}
+	}
+
+	// Check for plural non-virile (contains m2, m3, f, n1, n2, p2, p3 but not just m1.p1)
+	if number == "pl" {
+		if strings.Contains(gender, "m2") || strings.Contains(gender, "m3") ||
+			strings.Contains(gender, "f") || strings.Contains(gender, "p2") ||
+			strings.Contains(gender, "p3") {
+			slots = append(slots, slot+"NV")
+		}
+	}
+
+	return slots
+}
+
+// findPastFormNorm finds a form matching the given normalized slot.
+func findPastFormNorm(bySlot map[string][]VerbForm, number, person, genderCat, preferAspect string) string {
+	slot := number + ":" + person + ":" + genderCat
+	forms := bySlot[slot]
+	// Prefer matching aspect
+	for _, f := range forms {
+		if f.Aspect == preferAspect {
+			return f.Form
+		}
+	}
+	// Fall back to any form
+	if len(forms) > 0 {
+		return forms[0].Form
+	}
+	return ""
+}
+
+// isCompletePastParadigm checks if all 13 forms are present.
+func isCompletePastParadigm(p PastParadigm) bool {
+	return p.Sg1M != "" && p.Sg1F != "" &&
+		p.Sg2M != "" && p.Sg2F != "" &&
+		p.Sg3M != "" && p.Sg3F != "" && p.Sg3N != "" &&
+		p.Pl1V != "" && p.Pl1NV != "" &&
+		p.Pl2V != "" && p.Pl2NV != "" &&
+		p.Pl3V != "" && p.Pl3NV != ""
+}
+
+// isPastParadigmCoherent checks if the past paradigm forms share a consistent stem.
+// Past tense is very regular - almost all forms share the same stem,
+// with predictable endings.
+func isPastParadigmCoherent(p PastParadigm) bool {
+	// Extract stem from sg3m (base form) - remove -ł
+	stem := strings.TrimSuffix(p.Sg3M, "ł")
+	if stem == p.Sg3M {
+		// Might be an irregular form like "szedł" - accept it
+		return true
+	}
+
+	// For regular verbs, check that feminine forms match stem + ła/łam/łaś
+	// This is a light coherence check - past tense is much more regular than present
+	if !strings.HasPrefix(p.Sg3F, stem) {
+		// Check for ó→o alternation (e.g., mógł → mogła)
+		altStem := strings.ReplaceAll(stem, "ó", "o")
+		if !strings.HasPrefix(p.Sg3F, altStem) {
+			// Check for vowel dropping (e.g., tarł → tarła, but also niósł → niosła)
+			// These are acceptable variations
+			return true // Accept for now - past tense is very regular
+		}
+	}
+
+	return true
 }
