@@ -4,26 +4,31 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	"petezalew.ski/odmiany/pkg/verb"
 )
 
 func main() {
 	past := flag.Bool("past", false, "show past tense conjugation")
+	gerund := flag.Bool("gerund", false, "show verbal noun (rzeczownik odsłownikowy)")
 	flag.Parse()
 
 	verbs := flag.Args()
 	if len(verbs) < 1 {
-		fmt.Fprintln(os.Stderr, "usage: odmiany [-past] <verb> [verb2] [verb3] ...")
+		fmt.Fprintln(os.Stderr, "usage: odmiany [-past|-gerund] <verb> [verb2] [verb3] ...")
 		os.Exit(1)
 	}
 
 	compact := len(verbs) > 1
 
 	for i, infinitive := range verbs {
-		if *past {
+		switch {
+		case *gerund:
+			showVerbalNoun(infinitive)
+		case *past:
 			showPastTense(infinitive, compact)
-		} else {
+		default:
 			showPresentTense(infinitive, compact)
 		}
 
@@ -31,6 +36,15 @@ func main() {
 			fmt.Println()
 		}
 	}
+}
+
+func showVerbalNoun(infinitive string) {
+	forms, err := verb.VerbalNoun(infinitive)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s: %v\n", infinitive, err)
+		return
+	}
+	fmt.Printf("%s: %s\n", infinitive, strings.Join(forms, ", "))
 }
 
 func showPresentTense(infinitive string, compact bool) {
