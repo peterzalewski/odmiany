@@ -635,8 +635,9 @@ var nRetainingVerbs = map[string]bool{
 //   trzasnąć → trzasł/trzasnął (sg3m) but trzasnęli (virile always n-kept)
 
 // dualFormNacVerbsVirileDropped - dual-form verbs with n-dropped virile plural
-// Only includes base verbs that actually have dual forms in corpus
+// Includes both base verbs with dual entries AND specific prefixed forms
 var dualFormNacVerbsVirileDropped = map[string]bool{
+	// Base verbs with dual entries
 	"buchnąć":    true, // burst
 	"cuchnąć":    true, // stink
 	"gęstnąć":    true, // thicken
@@ -657,17 +658,35 @@ var dualFormNacVerbsVirileDropped = map[string]bool{
 	"spełgnąć":   true, // creep (archaic)
 	"stęgnąć":    true, // stiffen
 	"ślizgnąć":   true, // slip
+	// Prefixed verbs with dual entries (base has single entry)
+	"dosięgnąć":   true, // reach (base sięgnąć has single entry)
+	"napuchnąć":   true, // swell
+	"ochlapnąć":   true, // splash
+	"oklapnąć":    true, // droop
+	"ostygnąć":    true, // cool down
+	"przesięgnąć": true, // reach (base sięgnąć has single entry)
+	"przywyknąć":  true, // get used to
+	"spuchnąć":    true, // swell
+	"ubodnąć":     true, // poke
+	"wyziębnąć":   true, // get cold
+	"zgorzknąć":   true, // turn bitter
 }
 
 // dualFormNacVerbsVirileKept - dual-form verbs with n-kept virile plural
 var dualFormNacVerbsVirileKept = map[string]bool{
+	// Base verbs with dual entries
 	"brzęknąć": true, // clang
 	"chrypnąć": true, // go hoarse
 	"prysnąć":  true, // spray
 	"trysnąć":  true, // spurt
 	"trzasnąć": true, // slam
-	"wisnąć":   true, // hang (nawisnąć, obwisnąć, zawisnąć, etc.)
+	"wisnąć":   true, // hang (for prefixed forms like nawisnąć, zawisnąć)
 	"śliznąć":  true, // slip (variant)
+	// Prefixed verbs with dual entries (base has single entry)
+	"rozbłysnąć": true, // flash
+	"rozplasnąć": true, // splash
+	"rozplusnąć": true, // splash
+	"zabłysnąć":  true, // flash
 }
 
 // isDualFormNacVerb checks if a verb (base or prefixed) has dual n-drop/n-keep forms.
