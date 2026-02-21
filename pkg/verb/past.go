@@ -186,107 +186,142 @@ func buildPastTense(stem string) PastTense {
 	}
 }
 
+// Verbs where e→a alternation applies to ALL forms (not just masculine).
+// blednąć → bladłem, bladł, bladła (all use "blad" stem)
+var allFormsEToAVerbs = map[string]bool{
+	"blednąć": true, "bladnąć": true,
+}
+
 // buildPastTenseNDropped creates a past paradigm for n-dropping -nąć verbs.
 // The stem is what remains after removing -nąć (e.g., "gas" from "gasnąć").
 // These verbs need consonant palatalization in virile plural: s→ś, z→ź, etc.
 // The infinitive is passed to check for vowel alternation patterns.
 func buildPastTenseNDropped(stem, infinitive string) PastTense {
+	// Check if this verb uses e→a alternation in ALL forms
+	base := extractBase(infinitive)
+	useAltForAll := allFormsEToAVerbs[infinitive] || (base != infinitive && allFormsEToAVerbs[base])
+
 	// Get the virile stem with palatalized final consonant
 	virileStem := palatalizeForVirile(stem, infinitive)
 
-	// Check for masculine sg vowel alternation (ę→ą, e→a, o→ó)
+	// Check for masculine sg vowel alternation (ę→ą, e→a)
+	// This applies to sg1m, sg2m, sg3m
 	mascStem := applyMascSgAlternation(stem, infinitive)
+
+	// Apply sg3m-only alternations (o→ó, epenthetic e)
+	// These only affect sg3m, not sg1m/sg2m
+	sg3mStem := applySg3MOnlyAlternation(mascStem, infinitive)
+
+	// Determine feminine/neuter/non-virile stem
+	var otherStem string
+	if useAltForAll {
+		// e→a applies to ALL forms: blednąć → bladła (not bledła)
+		otherStem = mascStem
+	} else {
+		// Alternation only in masculine: klęknąć → kląkł but klękła
+		otherStem = stem
+	}
 
 	return PastTense{
 		Sg1M:  mascStem + "łem",
-		Sg1F:  stem + "łam",
+		Sg1F:  otherStem + "łam",
 		Sg2M:  mascStem + "łeś",
-		Sg2F:  stem + "łaś",
-		Sg3M:  mascStem + "ł",
-		Sg3F:  stem + "ła",
-		Sg3N:  stem + "ło",
+		Sg2F:  otherStem + "łaś",
+		Sg3M:  sg3mStem + "ł",
+		Sg3F:  otherStem + "ła",
+		Sg3N:  otherStem + "ło",
 		Pl1V:  virileStem + "liśmy",
-		Pl1NV: stem + "łyśmy",
+		Pl1NV: otherStem + "łyśmy",
 		Pl2V:  virileStem + "liście",
-		Pl2NV: stem + "łyście",
+		Pl2NV: otherStem + "łyście",
 		Pl3V:  virileStem + "li",
-		Pl3NV: stem + "ły",
+		Pl3NV: otherStem + "ły",
 	}
 }
 
-// applyMascSgAlternation applies vowel alternation for masculine singular forms.
-// ę→ą: blednąć→bladł, więdnąć→wiądł, ziębnąć→ziąbł, klęknąć→kląkł, etc.
-// o→ó: moknąć→mókł, chłodnąć→chłódł (only in sg3m)
+// applyMascSgAlternation applies vowel alternation for masculine singular forms (sg1m, sg2m, sg3m).
+// This applies to alternations that affect ALL masculine forms:
+// ę→ą or e→a: blednąć→bladł, więdnąć→wiądł, klęknąć→kląkł, etc.
 func applyMascSgAlternation(stem, infinitive string) string {
-	// Verbs with ę→ą alternation in masculine sg
+	// Verbs with ę→ą or e→a alternation in ALL masculine sg forms
 	eToAVerbs := map[string]bool{
 		"blednąć": true, "bladnąć": true,
 		"więdnąć": true, "zwiędnąć": true,
 		"ziębnąć": true,
-		"klęknąć": true,
+		"klęknąć": true, "klęsnąć": true,
 		"lęgnąć": true, "lęknąć": true,
 		"grzęznąć": true, "gręznąć": true, "grząznąć": true, "grąznąć": true,
-		"przęgnąć": true, "strzęgnąć": true,
+		"przęgnąć": true, "strzęgnąć": true, "sięgnąć": true,
 		"więznąć": true, "więzgnąć": true,
 		"wiąznąć": true,
 	}
 
-	// Verbs with o→ó alternation in masculine sg
-	oToOKreskaVerbs := map[string]bool{
-		"moknąć":   true,
-		"chłodnąć": true,
-	}
-
 	// Check if the infinitive itself is in the list first
-	// This handles base verbs like więdnąć directly
 	if eToAVerbs[infinitive] {
-		runes := []rune(stem)
-		for i := len(runes) - 1; i >= 0; i-- {
-			if runes[i] == 'ę' {
-				runes[i] = 'ą'
-				return string(runes)
-			}
-			if runes[i] == 'e' {
-				runes[i] = 'a'
-				return string(runes)
-			}
-		}
+		return applyEToA(stem)
 	}
 
 	// Then check for prefixed forms (e.g., nadwiędnąć)
 	base := extractBase(infinitive)
 	if base != infinitive && eToAVerbs[base] {
+		return applyEToA(stem)
+	}
+
+	return stem
+}
+
+// applyEToA applies ę→ą or e→a alternation to the rightmost occurrence.
+func applyEToA(stem string) string {
+	runes := []rune(stem)
+	for i := len(runes) - 1; i >= 0; i-- {
+		if runes[i] == 'ę' {
+			runes[i] = 'ą'
+			return string(runes)
+		}
+		if runes[i] == 'e' {
+			runes[i] = 'a'
+			return string(runes)
+		}
+	}
+	return stem
+}
+
+// applySg3MOnlyAlternation applies alternations that ONLY affect sg3m (not sg1m/sg2m).
+// o→ó: moknąć → mókł (sg3m) but mokłem (sg1m)
+// epenthetic e: schnąć → sechł (sg3m) but schłem (sg1m)
+func applySg3MOnlyAlternation(stem, infinitive string) string {
+	// Verbs with o→ó alternation ONLY in sg3m
+	oToOKreskaVerbs := map[string]bool{
+		"moknąć":   true,
+		"chłodnąć": true,
+	}
+
+	// Verbs with epenthetic e ONLY in sg3m (consonant cluster before -ł)
+	// schnąć → sechł (sg3m), schłem (sg1m)
+	epentheticEVerbs := map[string]bool{
+		"schnąć": true,
+	}
+
+	// Check o→ó (only in sg3m)
+	if oToOKreskaVerbs[infinitive] || (extractBase(infinitive) != infinitive && oToOKreskaVerbs[extractBase(infinitive)]) {
 		runes := []rune(stem)
 		for i := len(runes) - 1; i >= 0; i-- {
-			if runes[i] == 'ę' {
-				runes[i] = 'ą'
-				return string(runes)
-			}
-			if runes[i] == 'e' {
-				runes[i] = 'a'
+			if runes[i] == 'o' {
+				runes[i] = 'ó'
 				return string(runes)
 			}
 		}
 	}
 
-	// Check o→ó alternation
-	if oToOKreskaVerbs[infinitive] {
+	// Check epenthetic e (only in sg3m)
+	if epentheticEVerbs[infinitive] || (extractBase(infinitive) != infinitive && epentheticEVerbs[extractBase(infinitive)]) {
+		// Insert 'e' before the final consonant cluster
+		// sch → sech
 		runes := []rune(stem)
-		for i := len(runes) - 1; i >= 0; i-- {
-			if runes[i] == 'o' {
-				runes[i] = 'ó'
-				return string(runes)
-			}
-		}
-	}
-	base = extractBase(infinitive)
-	if base != infinitive && oToOKreskaVerbs[base] {
-		runes := []rune(stem)
-		for i := len(runes) - 1; i >= 0; i-- {
-			if runes[i] == 'o' {
-				runes[i] = 'ó'
-				return string(runes)
-			}
+		if len(runes) >= 2 {
+			// Find the consonant cluster and insert e before the last consonant
+			// For "sch": insert e before 'h' → "sech"
+			return string(runes[:len(runes)-1]) + "e" + string(runes[len(runes)-1:])
 		}
 	}
 
@@ -577,10 +612,11 @@ func heuristicPastAwac(infinitive string) (PastTense, bool) {
 }
 
 // heuristicPastNac handles -nąć verbs.
-// Three main patterns:
+// Main patterns:
 // 1. N-retaining with ą→ę alternation: ciągnąć → ciągnął/ciągnęła (has ą in stem)
 // 2. N-dropping: schnąć → schł/schła (inchoative/state-change verbs)
 // 3. Mixed: cuchnąć → cuchnął/cuchnęła/cuchli (retain n in sg, drop in virile pl)
+// 4. Prefixed dual-form: przekwitnąć → przekwitł/przekwitnęła (n-dropped sg3m, n-kept fem)
 func heuristicPastNac(infinitive string) (PastTense, bool) {
 	if !strings.HasSuffix(infinitive, "nąć") {
 		return PastTense{}, false
@@ -618,6 +654,114 @@ func heuristicPastNac(infinitive string) (PastTense, bool) {
 	return buildPastTenseWithAlternation(mascStem, femStem), true
 }
 
+// Dual-form verbs whose prefixed forms use N-DROPPED sg3m.
+// Example: przekwitnąć → przekwitł (sg3m), przekwitnęła (sg3f)
+var dualBasesPrefixedNDropped = map[string]bool{
+	"kwitnąć":    true, // bloom
+	"brzęknąć":   true, // clang
+	"pierzchnąć": true, // scatter
+}
+
+// Dual-form verbs whose prefixed forms use N-KEPT sg3m.
+// Example: zatrzasnąć → zatrzasnął (sg3m), zatrzasnęła (sg3f)
+var dualBasesPrefixedNKept = map[string]bool{
+	"trzasnąć": true, // slam
+	"śliznąć":  true, // slip
+	"niknąć":   true, // vanish
+	"siągnąć":  true, // reach
+	"siąknąć":  true, // seep
+	"sięknąć":  true, // seep (variant)
+}
+
+// isPrefixedDualFormVerb checks if this is a prefixed form of a dual-form base verb.
+// Returns the base verb if found, empty string otherwise.
+func getPrefixedDualFormBase(infinitive string) string {
+	// Don't match if it's directly in the dual list (those return both paradigms)
+	if isDualFormNacVerb(infinitive) {
+		return ""
+	}
+
+	// Check if base is a dual-form verb
+	base := extractBase(infinitive)
+	if base != infinitive && isDualFormNacVerb(base) {
+		return base
+	}
+
+	return ""
+}
+
+// isPrefixedDualFormNDropped returns true if this prefixed verb should use n-dropped sg3m.
+func isPrefixedDualFormNDropped(infinitive string) bool {
+	base := getPrefixedDualFormBase(infinitive)
+	return base != "" && dualBasesPrefixedNDropped[base]
+}
+
+// isPrefixedDualFormNKept returns true if this prefixed verb should use n-kept sg3m.
+func isPrefixedDualFormNKept(infinitive string) bool {
+	base := getPrefixedDualFormBase(infinitive)
+	return base != "" && dualBasesPrefixedNKept[base]
+}
+
+// buildPastTensePrefixedDualFormNDropped builds past tense for prefixed forms that use n-dropped sg3m.
+// Pattern: n-dropped sg3m, n-kept feminine/neuter/non-virile, n-dropped virile.
+// Example: przekwitnąć → przekwitł (sg3m), przekwitnęła (sg3f), przekwitli (pl3v)
+func buildPastTensePrefixedDualFormNDropped(stemWithoutNac, infinitive string) PastTense {
+	// Get the virile stem with palatalized final consonant (n-dropped)
+	virileStem := palatalizeForVirile(stemWithoutNac, infinitive)
+
+	// Check for masculine sg vowel alternation (ę→ą, e→a)
+	mascStem := applyMascSgAlternation(stemWithoutNac, infinitive)
+
+	// Apply sg3m-only alternations (o→ó, epenthetic e)
+	sg3mStem := applySg3MOnlyAlternation(mascStem, infinitive)
+
+	// N-kept stem for feminine/neuter/non-virile
+	baseStem := strings.TrimSuffix(infinitive, "ąć") // przekwitn
+	femStem := baseStem + "ę"                        // przekwitnę
+
+	return PastTense{
+		Sg1M:  mascStem + "łem",
+		Sg1F:  femStem + "łam",
+		Sg2M:  mascStem + "łeś",
+		Sg2F:  femStem + "łaś",
+		Sg3M:  sg3mStem + "ł",
+		Sg3F:  femStem + "ła",
+		Sg3N:  femStem + "ło",
+		Pl1V:  virileStem + "liśmy",
+		Pl1NV: femStem + "łyśmy",
+		Pl2V:  virileStem + "liście",
+		Pl2NV: femStem + "łyście",
+		Pl3V:  virileStem + "li",
+		Pl3NV: femStem + "ły",
+	}
+}
+
+// buildPastTensePrefixedDualFormNKept builds past tense for prefixed forms that use n-kept sg3m.
+// Pattern: n-kept sg3m, n-kept feminine/neuter/non-virile, n-kept virile.
+// Example: zatrzasnąć → zatrzasnął (sg3m), zatrzasnęła (sg3f), zatrzasnęli (pl3v)
+func buildPastTensePrefixedDualFormNKept(stemWithoutNac, infinitive string) PastTense {
+	// N-kept stems
+	baseStem := strings.TrimSuffix(infinitive, "ąć") // zatrzasn
+	mascStem := baseStem + "ą"                       // zatrzasną
+	femStem := baseStem + "ę"                        // zatrzasnę
+
+	return PastTense{
+		Sg1M:  mascStem + "łem",
+		Sg1F:  femStem + "łam",
+		Sg2M:  mascStem + "łeś",
+		Sg2F:  femStem + "łaś",
+		Sg3M:  mascStem + "ł",
+		Sg3F:  femStem + "ła",
+		Sg3N:  femStem + "ło",
+		Pl1V:  femStem + "liśmy",
+		Pl1NV: femStem + "łyśmy",
+		Pl2V:  femStem + "liście",
+		Pl2NV: femStem + "łyście",
+		Pl3V:  femStem + "li",
+		Pl3NV: femStem + "ły",
+	}
+}
+
 // nRetainingVerbs are verbs that look like prefixed forms of n-dropping verbs
 // but are actually separate lexemes that retain n in past tense.
 // smoknąć (to get slapped) looks like s+moknąć but is NOT - it keeps n: smoknął
@@ -635,98 +779,84 @@ var nRetainingVerbs = map[string]bool{
 //   trzasnąć → trzasł/trzasnął (sg3m) but trzasnęli (virile always n-kept)
 
 // dualFormNacVerbsVirileDropped - dual-form verbs with n-dropped virile plural
-// Includes both base verbs with dual entries AND specific prefixed forms
+// Includes both base verbs with dual entries AND prefixed forms with dual entries
 var dualFormNacVerbsVirileDropped = map[string]bool{
 	// Base verbs with dual entries
-	"buchnąć":    true, // burst
-	"cuchnąć":    true, // stink
-	"gęstnąć":    true, // thicken
-	"głuchnąć":   true, // go deaf
-	"klęknąć":    true, // kneel
-	"kwitnąć":    true, // bloom
-	"mierzchnąć": true, // fade
-	"niknąć":     true, // vanish
-	"pełznąć":    true, // crawl
-	"pierzchnąć": true, // scatter
-	"pizdnąć":    true, // slap (vulgar)
-	"rymsnąć":    true, // bolt
-	"rypnąć":     true, // thud
-	"sieknąć":    true, // drizzle
-	"siągnąć":    true, // reach
-	"siąknąć":    true, // seep
-	"sięknąć":    true, // seep (variant)
-	"spełgnąć":   true, // creep (archaic)
-	"stęgnąć":    true, // stiffen
-	"ślizgnąć":   true, // slip
+	"buchnąć": true, "cuchnąć": true, "gęstnąć": true, "głuchnąć": true,
+	"klęknąć": true, "kwitnąć": true, "mierzchnąć": true, "niknąć": true,
+	"pełznąć": true, "pierzchnąć": true, "pizdnąć": true, "rymsnąć": true,
+	"rypnąć": true, "sieknąć": true, "siągnąć": true, "siąknąć": true,
+	"sięknąć": true, "spełgnąć": true, "stęgnąć": true,
 	// Prefixed verbs with dual entries (base has single entry)
-	"dosięgnąć":   true, // reach (base sięgnąć has single entry)
-	"napuchnąć":   true, // swell
-	"ochlapnąć":   true, // splash
-	"oklapnąć":    true, // droop
-	"ostygnąć":    true, // cool down
-	"przesięgnąć": true, // reach (base sięgnąć has single entry)
-	"przywyknąć":  true, // get used to
-	"spuchnąć":    true, // swell
-	"ubodnąć":     true, // poke
-	"wyziębnąć":   true, // get cold
-	"zgorzknąć":   true, // turn bitter
+	"dosięgnąć": true, "napuchnąć": true, "ochlapnąć": true, "oklapnąć": true,
+	"ostygnąć": true, "przesięgnąć": true, "przywyknąć": true, "spuchnąć": true,
+	"ubodnąć": true, "wyziębnąć": true, "zgorzknąć": true,
+	// Prefixed forms of dual bases that also have dual entries
+	// From buchnąć:
+	"wybuchnąć": true,
+	// From cuchnąć:
+	"zacuchnąć": true,
+	// From gęstnąć:
+	"zgęstnąć": true,
+	// From klęknąć:
+	"poklęknąć": true, "przyklęknąć": true, "uklęknąć": true, "zaklęknąć": true,
+	// From kwitnąć:
+	"dokwitnąć": true, "okwitnąć": true, "przekwitnąć": true,
+	"rozkwitnąć": true, "wykwitnąć": true, "zakwitnąć": true,
+	// From mierzchnąć:
+	"pomierzchnąć": true,
+	// From niknąć:
+	"poniknąć": true, "wyniknąć": true, "zaniknąć": true, "zniknąć": true,
+	// From pełznąć:
+	"dopełznąć": true, "nadpełznąć": true, "odpełznąć": true, "opełznąć": true,
+	"podpełznąć": true, "popełznąć": true, "przepełznąć": true, "przypełznąć": true,
+	"rozpełznąć": true, "spełznąć": true, "wpełznąć": true, "wypełznąć": true, "zapełznąć": true,
+	// From pierzchnąć:
+	"rozpierzchnąć": true, "spierzchnąć": true,
+	// From siągnąć:
+	"dosiągnąć": true,
+	// From siąknąć:
+	"nasiąknąć": true, "osiąknąć": true, "podsiąknąć": true,
+	"przesiąknąć": true, "wsiąknąć": true, "wysiąknąć": true,
+	// From sięknąć:
+	"przesięknąć": true, "wsięknąć": true,
 }
 
 // dualFormNacVerbsVirileKept - dual-form verbs with n-kept virile plural
 var dualFormNacVerbsVirileKept = map[string]bool{
 	// Base verbs with dual entries
-	"brzęknąć": true, // clang
-	"chrypnąć": true, // go hoarse
-	"prysnąć":  true, // spray
-	"trysnąć":  true, // spurt
-	"trzasnąć": true, // slam
-	"wisnąć":   true, // hang (for prefixed forms like nawisnąć, zawisnąć)
-	"śliznąć":  true, // slip (variant)
+	"brzęknąć": true, "chrypnąć": true, "prysnąć": true, "trysnąć": true,
+	"trzasnąć": true, "wisnąć": true, "śliznąć": true,
 	// Prefixed verbs with dual entries (base has single entry)
-	"rozbłysnąć": true, // flash
-	"rozplasnąć": true, // splash
-	"rozplusnąć": true, // splash
-	"zabłysnąć":  true, // flash
+	"rozbłysnąć": true, "rozplasnąć": true, "rozplusnąć": true, "zabłysnąć": true,
+	// Prefixed forms of dual bases that also have dual entries
+	// From brzęknąć:
+	"zabrzęknąć": true,
+	// From prysnąć:
+	"odprysnąć": true, "rozprysnąć": true, "sprysnąć": true, "wprysnąć": true, "wyprysnąć": true,
+	// From trysnąć:
+	"natrysnąć": true, "roztrysnąć": true, "wtrysnąć": true, "wytrysnąć": true,
+	// From wisnąć:
+	"nawisnąć": true, "obwisnąć": true, "owisnąć": true, "rozwisnąć": true,
+	"uwisnąć": true, "zawisnąć": true, "zwisnąć": true,
+	// From śliznąć:
+	"obśliznąć": true, "ośliznąć": true,
 }
 
-// isDualFormNacVerb checks if a verb (base or prefixed) has dual n-drop/n-keep forms.
+// isDualFormNacVerb checks if a verb has dual n-drop/n-keep forms.
+// Only returns true for verbs DIRECTLY listed - no prefix matching.
+// This is because prefixed forms often have only one variant in the corpus
+// even when the base verb has both.
 func isDualFormNacVerb(infinitive string) bool {
 	if !strings.HasSuffix(infinitive, "nąć") {
 		return false
 	}
-
-	// Direct lookup in either map
-	if dualFormNacVerbsVirileDropped[infinitive] || dualFormNacVerbsVirileKept[infinitive] {
-		return true
-	}
-
-	// Check for prefixed forms
-	for _, prefix := range verbPrefixes {
-		if strings.HasPrefix(infinitive, prefix) {
-			base := infinitive[len(prefix):]
-			if dualFormNacVerbsVirileDropped[base] || dualFormNacVerbsVirileKept[base] {
-				return true
-			}
-		}
-	}
-
-	return false
+	return dualFormNacVerbsVirileDropped[infinitive] || dualFormNacVerbsVirileKept[infinitive]
 }
 
 // isDualFormVirileKept returns true if this dual-form verb uses n-kept virile plural.
 func isDualFormVirileKept(infinitive string) bool {
-	if dualFormNacVerbsVirileKept[infinitive] {
-		return true
-	}
-	for _, prefix := range verbPrefixes {
-		if strings.HasPrefix(infinitive, prefix) {
-			base := infinitive[len(prefix):]
-			if dualFormNacVerbsVirileKept[base] {
-				return true
-			}
-		}
-	}
-	return false
+	return dualFormNacVerbsVirileKept[infinitive]
 }
 
 // isKnownNDroppingVerb checks if a verb is a known n-dropping -nąć verb.

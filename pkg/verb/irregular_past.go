@@ -865,10 +865,11 @@ var irregularPastVerbs = map[string]PastTense{
 		Pl3V: "przesiąkli", Pl3NV: "przesiąkły",
 	},
 
-	// schnąć → sechł/schła (asymmetric: masc sg has 'e', others don't)
+	// schnąć → sechł/schła (epenthetic 'e' ONLY in sg3m, not sg1m/sg2m)
+	// Per corpus: sg1m=schłem, sg3m=sechł
 	"schnąć": {
-		Sg1M: "sechłem", Sg1F: "schłam",
-		Sg2M: "sechłeś", Sg2F: "schłaś",
+		Sg1M: "schłem", Sg1F: "schłam",
+		Sg2M: "schłeś", Sg2F: "schłaś",
 		Sg3M: "sechł", Sg3F: "schła", Sg3N: "schło",
 		Pl1V: "schliśmy", Pl1NV: "schłyśmy",
 		Pl2V: "schliście", Pl2NV: "schłyście",
@@ -1057,42 +1058,35 @@ func buildJscPast(prefix string) PastTense {
 }
 
 // buildSchnacPast builds past tense for prefixed schnąć verbs.
-// schnąć has an asymmetric stem: masc sg uses "sechł", others use "schł".
+// schnąć has an asymmetric stem: sg3m uses "sechł" (epenthetic e), others use "schł".
 // Additionally, prefixes with epenthetic vowels (obe-, pode-, roze-, ze-)
-// strip the vowel in masc sg but keep it in other forms.
-// obeschnąć: sg3m=obsechł (ob+sechł), sg3f=obeschła (obe+schła)
+// strip the vowel in sg3m but keep it in other forms.
+// obeschnąć: sg1m=obeschłem, sg3m=obsechł, sg3f=obeschła
 func buildSchnacPast(infinitive string) PastTense {
 	// Determine the prefix from the infinitive
 	prefix := strings.TrimSuffix(infinitive, "schnąć")
 
-	// For masculine singular: strip epenthetic from prefix, use sechł stem
-	mascPrefix := prefix
+	// For sg3m only: strip epenthetic from prefix, use sechł stem
+	sg3mPrefix := prefix
 	epenthetic := map[string]string{
 		"obe": "ob", "pode": "pod", "roze": "roz", "ze": "z",
 	}
 	for full, stripped := range epenthetic {
 		if strings.HasSuffix(prefix, full) {
-			mascPrefix = prefix[:len(prefix)-len(full)] + stripped
+			sg3mPrefix = prefix[:len(prefix)-len(full)] + stripped
 			break
 		}
 	}
 
-	// For other forms: keep original prefix, use schł stem
+	// For all other forms (including sg1m, sg2m): keep original prefix, use schł stem
 	otherPrefix := prefix
 
-	// Special case: zeschnąć has ze→s in masc (ssechł, not zsechł),
-	// but ze→ze in others (zeschła, not sschła)
-	// Actually the corpus shows ze→z for masc: zeschnąć → ssechł = z+sechł
-	// Wait, that's s+sechł = ssechł. So ze→s? No, z+sechł = zsechł, but corpus shows ssechł.
-	// Looking closer: zeschnąć: sg3m=ssechł. This must be a special case.
-	// Actually, s+sechł wouldn't make sense either. Let me handle zeschnąć specially.
+	// Special case: zeschnąć has unusual assimilation
+	// sg3m = ssechł (ze → s before s-stem, then s+sechł = ssechł)
 	if infinitive == "zeschnąć" {
-		// zeschnąć is weird: sg3m = ssechł (ze → s before s-stem?)
-		// Actually, historically ze- before s- assimilates: ze+schnąć → zeschnąć,
-		// past: ze+sechł → the ze is dropped and s+sechł = ssechł
 		return PastTense{
-			Sg1M: "ssechłem", Sg1F: "zeschłam",
-			Sg2M: "ssechłeś", Sg2F: "zeschłaś",
+			Sg1M: "zeschłem", Sg1F: "zeschłam",
+			Sg2M: "zeschłeś", Sg2F: "zeschłaś",
 			Sg3M: "ssechł", Sg3F: "zeschła", Sg3N: "zeschło",
 			Pl1V: "zeschliśmy", Pl1NV: "zeschłyśmy",
 			Pl2V: "zeschliście", Pl2NV: "zeschłyście",
@@ -1101,11 +1095,11 @@ func buildSchnacPast(infinitive string) PastTense {
 	}
 
 	return PastTense{
-		Sg1M:  mascPrefix + "sechłem",
+		Sg1M:  otherPrefix + "schłem",
 		Sg1F:  otherPrefix + "schłam",
-		Sg2M:  mascPrefix + "sechłeś",
+		Sg2M:  otherPrefix + "schłeś",
 		Sg2F:  otherPrefix + "schłaś",
-		Sg3M:  mascPrefix + "sechł",
+		Sg3M:  sg3mPrefix + "sechł",
 		Sg3F:  otherPrefix + "schła",
 		Sg3N:  otherPrefix + "schło",
 		Pl1V:  otherPrefix + "schliśmy",
