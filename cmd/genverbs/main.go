@@ -47,6 +47,7 @@ type Tense string
 const (
 	TensePresent Tense = "present"
 	TensePast    Tense = "past"
+	TenseGerund  Tense = "gerund"
 )
 
 // VerbForm represents a single conjugated form with its grammatical tags.
@@ -98,6 +99,12 @@ type PastParadigm struct {
 	Aspect string `json:"aspect"`
 }
 
+// GerundEntry holds an infinitive and its verbal noun form.
+type GerundEntry struct {
+	Infinitive string `json:"infinitive"`
+	VerbalNoun string `json:"verbal_noun"`
+}
+
 // conjugationPattern defines expected ending patterns for a conjugation class.
 // If sg1 ends with Sg1Suffix, we expect sg2 to end with Sg2Suffix, etc.
 type conjugationPattern struct {
@@ -137,7 +144,7 @@ var knownPatterns = []conjugationPattern{
 
 func main() {
 	inputPath := flag.String("input", "data/polish.txt.bz2", "path to polish.txt.bz2")
-	tense := flag.String("tense", "present", "tense to extract: present or past")
+	tense := flag.String("tense", "present", "tense to extract: present, past, or gerund")
 	flag.Parse()
 
 	f, err := os.Open(*inputPath)
@@ -150,6 +157,12 @@ func main() {
 	reader := bzip2.NewReader(f)
 	scanner := bufio.NewScanner(reader)
 
+	// Gerund mode uses a different extraction path
+	if Tense(*tense) == TenseGerund {
+		extractGerunds(scanner)
+		return
+	}
+
 	// Collect ALL forms for each infinitive
 	verbForms := make(map[string][]VerbForm)
 
@@ -161,7 +174,7 @@ func main() {
 	case TensePast:
 		tagPrefix = "verb:praet:"
 	default:
-		fmt.Fprintf(os.Stderr, "unknown tense: %s (use 'present' or 'past')\n", *tense)
+		fmt.Fprintf(os.Stderr, "unknown tense: %s (use 'present', 'past', or 'gerund')\n", *tense)
 		os.Exit(1)
 	}
 
@@ -692,4 +705,66 @@ func isPastParadigmCoherent(p PastParadigm) bool {
 	}
 
 	return true
+}
+
+// extractGerunds scans Polimorf for verbal noun (gerund) forms.
+// Matches tags containing "ger:sg:nom:" with ":aff:" (affirmative).
+// Emits one entry per (infinitive, verbal_noun) pair.
+func extractGerunds(scanner *bufio.Scanner) {
+	// Use a set to deduplicate (infinitive, form) pairs
+	type pair struct{ inf, form string }
+	seen := make(map[pair]bool)
+	var entries []GerundEntry
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		parts := strings.Split(line, ";")
+		if len(parts) != 3 {
+			continue
+		}
+		lemma, form, tags := parts[0], parts[1], parts[2]
+
+		// Match gerund nominative singular affirmative
+		if !strings.Contains(tags, "ger:") {
+			continue
+		}
+		if !strings.Contains(tags, ":sg:") || !strings.Contains(tags, ":nom") || !strings.Contains(tags, ":aff") {
+			continue
+		}
+
+		p := pair{lemma, form}
+		if seen[p] {
+			continue
+		}
+		seen[p] = true
+		entries = append(entries, GerundEntry{Infinitive: lemma, VerbalNoun: form})
+	}
+
+	if err := scanner.Err(); err != nil {
+		fmt.Fprintf(os.Stderr, "scan: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Sort for deterministic output
+	sort.Slice(entries, func(i, j int) bool {
+		if entries[i].Infinitive != entries[j].Infinitive {
+			return entries[i].Infinitive < entries[j].Infinitive
+		}
+		return entries[i].VerbalNoun < entries[j].VerbalNoun
+	})
+
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	if err := enc.Encode(entries); err != nil {
+		fmt.Fprintf(os.Stderr, "encode: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Count unique infinitives
+	infinitives := make(map[string]bool)
+	for _, e := range entries {
+		infinitives[e.Infinitive] = true
+	}
+	fmt.Fprintf(os.Stderr, "Extracted %d verbal noun entries from %d infinitives\n",
+		len(entries), len(infinitives))
 }

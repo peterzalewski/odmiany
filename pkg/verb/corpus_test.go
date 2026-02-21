@@ -317,6 +317,97 @@ func TestCorpusPastAccuracy(t *testing.T) {
 	}
 }
 
+type gerundCorpusEntry struct {
+	Infinitive string `json:"infinitive"`
+	VerbalNoun string `json:"verbal_noun"`
+}
+
+func loadGerundCorpus(t *testing.T) []gerundCorpusEntry {
+	t.Helper()
+	data, err := os.ReadFile("testdata/verbs_gerund.json")
+	if err != nil {
+		t.Fatalf("failed to load gerund corpus: %v", err)
+	}
+	var entries []gerundCorpusEntry
+	if err := json.Unmarshal(data, &entries); err != nil {
+		t.Fatalf("failed to parse gerund corpus: %v", err)
+	}
+	return entries
+}
+
+func TestCorpusVerbalNounAccuracy(t *testing.T) {
+	entries := loadGerundCorpus(t)
+
+	// Group corpus entries by infinitive (some verbs have multiple valid forms)
+	byInfinitive := make(map[string][]string)
+	for _, e := range entries {
+		byInfinitive[e.Infinitive] = append(byInfinitive[e.Infinitive], e.VerbalNoun)
+	}
+
+	var passed, failed, noMatch int
+	failures := make(map[string]int)
+
+	for infinitive, corpusForms := range byInfinitive {
+		predicted, err := VerbalNoun(infinitive)
+		if err != nil {
+			noMatch++
+			pattern := classifyFailure(infinitive, "no_match")
+			failures[pattern]++
+			continue
+		}
+
+		// Check if ANY corpus form appears in our predicted forms
+		anyMatch := false
+		for _, corpusForm := range corpusForms {
+			for _, predForm := range predicted {
+				if corpusForm == predForm {
+					anyMatch = true
+					break
+				}
+			}
+			if anyMatch {
+				break
+			}
+		}
+
+		if anyMatch {
+			passed++
+		} else {
+			failed++
+			desc := fmt.Sprintf("want %s got %s", corpusForms[0], predicted[0])
+			pattern := classifyFailure(infinitive, desc)
+			failures[pattern]++
+		}
+	}
+
+	total := len(byInfinitive)
+	accuracy := float64(passed) / float64(total) * 100
+
+	t.Logf("Verbal noun corpus accuracy: %.2f%% (%d/%d passed, %d failed, %d no match)",
+		accuracy, passed, total, failed, noMatch)
+
+	// Print top failure patterns
+	type failurePattern struct {
+		pattern string
+		count   int
+	}
+	var patterns []failurePattern
+	for p, c := range failures {
+		patterns = append(patterns, failurePattern{p, c})
+	}
+	sort.Slice(patterns, func(i, j int) bool {
+		return patterns[i].count > patterns[j].count
+	})
+
+	t.Log("\nTop failure patterns:")
+	for i, p := range patterns {
+		if i >= 20 {
+			break
+		}
+		t.Logf("  %4d: %s", p.count, p.pattern)
+	}
+}
+
 // describePastError returns a short description of how the past conjugation differs.
 func describePastError(infinitive string, expected, got PastTense) string {
 	var diffs []string
