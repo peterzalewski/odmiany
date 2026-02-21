@@ -1709,19 +1709,13 @@ func isInchoativeRzec(infinitive string) bool {
 
 // Consonant alternation helpers
 
-// vowels in Polish (for stem-final detection)
-var polishVowels = map[rune]bool{
-	'a': true, 'e': true, 'i': true, 'o': true, 'u': true, 'y': true,
-	'ą': true, 'ę': true, 'ó': true,
-}
-
 // endsInVowel returns true if the stem ends in a vowel.
 func endsInVowel(stem string) bool {
 	runes := []rune(stem)
 	if len(runes) == 0 {
 		return false
 	}
-	return polishVowels[runes[len(runes)-1]]
+	return isPolishVowel(runes[len(runes)-1])
 }
 
 // softConsonants are consonants (and digraphs) that are already "soft"

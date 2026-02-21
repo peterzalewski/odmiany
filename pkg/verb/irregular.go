@@ -11,7 +11,7 @@ const (
 )
 
 // presentSpec compactly describes a present tense paradigm.
-// At most 2 stems + a class byte; expanded to full PresentTense by build().
+// Uses stem + class byte, with optional per-cell overrides; expanded by build().
 type presentSpec struct {
 	stem  string // stem for Sg2/Sg3/Pl1/Pl2 (and Sg1/Pl3 if sg13 is empty)
 	sg13  string // Sg1/Pl3 stem override (defaults to stem)

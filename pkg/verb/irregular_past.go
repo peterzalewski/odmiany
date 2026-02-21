@@ -46,7 +46,7 @@ var pastHomographs = map[string][]PastParadigm{
 }
 
 // buildPascHomograph creates homograph entries for prefixed -paść verbs.
-// These verbs have two valid paradigms (fall vs graze pattern) plus a mixed form.
+// Returns two paradigms: pure "fall" pattern and a mixed masc-graze/fem-fall variant.
 func buildPascHomograph(prefix string) []PastParadigm {
 	return []PastParadigm{
 		// Pure "fall" pattern

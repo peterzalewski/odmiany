@@ -375,7 +375,7 @@ func extractBase(infinitive string) string {
 	// Try longer prefixes first to avoid false positives
 	// (e.g., "przy" before "prz", "prze" before "pr")
 	sortedPrefixes := []string{
-		"prze", "przy", "roze", "nade", "pode", "pode",
+		"prze", "przy", "roze", "nade", "pode",
 		"roz", "nad", "pod", "obe", "ode",
 		"za", "na", "po", "do", "od", "ob", "wy",
 		"u", "s", "z", "w", "o",
@@ -580,9 +580,9 @@ func heuristicPastStrzyc(infinitive string) (PastTense, bool) {
 		Sg3M:  prefix + "strzygł",
 		Sg3F:  prefix + "strzygła",
 		Sg3N:  prefix + "strzygło",
-		Pl1V:  prefix + "strzygli" + "śmy",
+		Pl1V:  prefix + "strzygliśmy",
 		Pl1NV: prefix + "strzygłyśmy",
-		Pl2V:  prefix + "strzygli" + "ście",
+		Pl2V:  prefix + "strzygliście",
 		Pl2NV: prefix + "strzygłyście",
 		Pl3V:  prefix + "strzygli",
 		Pl3NV: prefix + "strzygły",
