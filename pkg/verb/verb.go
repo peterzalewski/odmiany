@@ -1425,8 +1425,8 @@ func heuristicUc(infinitive string) (PresentTense, bool) {
 
 // heuristicEc handles -eć verbs.
 // Most -ieć verbs: biednieć → biednieję (891 verbs go to -ieję)
-// Few -ieć exceptions: umieć → umiem (26 verbs go to -iem)
-// Other -eć verbs: mieć → mam (irregular), chcieć → chcę (different pattern)
+// Some -ieć exceptions: rozumieć → rozumiem, wiedzieć → wiem (Class IV)
+// Other -eć verbs: chcieć → chcę, widzieć → widzę (different patterns)
 func heuristicEc(infinitive string) (PresentTense, bool) {
 	if !strings.HasSuffix(infinitive, "eć") {
 		return PresentTense{}, false
@@ -1541,30 +1541,8 @@ func heuristicEc(infinitive string) (PresentTense, bool) {
 		}, true
 	}
 
-	// -dzieć verbs: widzieć, siedzieć use -ę/-isz
-	// But -wiedzieć is handled above, and some use -eję
-	if strings.HasSuffix(infinitive, "idzieć") || strings.HasSuffix(infinitive, "edzieć") {
-		return PresentTense{
-			Sg1: stem + "ę",
-			Sg2: stem + "isz",
-			Sg3: stem + "i",
-			Pl1: stem + "imy",
-			Pl2: stem + "icie",
-			Pl3: stem + "ą",
-		}, true
-	}
-
-	// -cieć verbs: lecieć uses -ę/-isz, most others use -eję
-	if strings.HasSuffix(infinitive, "lecieć") {
-		return PresentTense{
-			Sg1: stem + "ę",
-			Sg2: stem + "isz",
-			Sg3: stem + "i",
-			Pl1: stem + "imy",
-			Pl2: stem + "icie",
-			Pl3: stem + "ą",
-		}, true
-	}
+	// -cieć verbs: mostly inchoative -eję pattern (lecieć uses -ę/-isz but
+	// is handled inside the -ieć block above since -lecieć ends in -ieć)
 	if strings.HasSuffix(infinitive, "cieć") {
 		stem := strings.TrimSuffix(infinitive, "ć")
 		return PresentTense{

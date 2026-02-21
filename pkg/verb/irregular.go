@@ -253,7 +253,7 @@ func lookupHomograph(infinitive string) ([]Paradigm, bool) {
 }
 
 // irregularPresentSpecs defines present tense stems compactly.
-// Expanded to full PresentTense paradigms by init().
+// Merged into irregularSpecs by buildIrregularSpecs() in spec.go.
 var irregularPresentSpecs = map[string]presentSpec{
 	// Suppletive / highly irregular
 	"być": {

@@ -18,7 +18,7 @@ type verbSpec struct {
 var irregularSpecs map[string]verbSpec
 
 // prefixableVerbs lists verbs that can take prefixes productively.
-// Used by lookupIrregularSpec for prefix-stripping lookup.
+// Used by the lookup functions for prefix-stripping.
 var prefixableVerbs = map[string]bool{
 	// Present tense prefixable
 	"pisać": true, "brać": true, "jechać": true, "dać": true,
@@ -65,7 +65,7 @@ var prefixableVerbs = map[string]bool{
 	"kaszliwać": true, "pyskiwać": true, "ziajać": true,
 	"śmierdzieć": true,
 
-	// Past tense prefixable (additions not already present)
+	// Past tense prefixable
 	"być": true, "ciąć": true,
 	"dąć": true, "giąć": true, "piąć": true, "miąć": true,
 	"żąć": true,
@@ -80,7 +80,7 @@ var prefixableVerbs = map[string]bool{
 	"mleć": true, "pleć": true, "żec": true,
 	"musieć": true, "słyszeć": true, "móc": true,
 
-	// Verbal noun prefixable (additions not already present)
+	// Verbal noun prefixable
 	"tyć": true,
 	"powić": true,
 	"chrzcić": true,
@@ -109,34 +109,26 @@ func init() {
 	irregularSpecs = buildIrregularSpecs()
 }
 
-// buildIrregularSpecs merges the three legacy maps into a unified verbSpec map.
+// buildIrregularSpecs merges the three irregular maps into a unified verbSpec map.
 func buildIrregularSpecs() map[string]verbSpec {
 	specs := make(map[string]verbSpec, 600)
 
-	// Helper to get-or-create a spec entry
-	get := func(verb string) verbSpec {
-		return specs[verb]
-	}
-
-	// 1. Populate from present tense specs
 	for verb, ps := range irregularPresentSpecs {
-		s := get(verb)
+		s := specs[verb]
 		ps := ps // copy
 		s.present = &ps
 		specs[verb] = s
 	}
 
-	// 2. Populate from past tense specs
 	for verb, ps := range irregularPastSpecs {
-		s := get(verb)
+		s := specs[verb]
 		ps := ps // copy
 		s.past = &ps
 		specs[verb] = s
 	}
 
-	// 3. Populate from verbal noun map
 	for verb, forms := range irregularVerbalNouns {
-		s := get(verb)
+		s := specs[verb]
 		formsCopy := make([]string, len(forms))
 		copy(formsCopy, forms)
 		s.verbalNoun = formsCopy

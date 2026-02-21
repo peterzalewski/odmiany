@@ -144,7 +144,7 @@ var mixedNDropNacVerbs = map[string]bool{
 }
 
 // irregularPastSpecs contains compact stem specs for verbs that cannot
-// be conjugated by heuristics alone. Expanded to irregularPastVerbs in init().
+// be conjugated by heuristics alone. Merged into irregularSpecs by spec.go.
 var irregularPastSpecs = map[string]pastSpec{
 	// === -jść verbs (special stem: pójść → poszedł, not pószedł) ===
 	"pójść":  {masc: "poszed", fem: "posz"},
