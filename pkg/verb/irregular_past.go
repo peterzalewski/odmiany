@@ -193,8 +193,8 @@ var mixedNDropNacVerbs = map[string]bool{
 	"cuchnąć":    true,
 	"gęstnąć":    true,
 	"mierzchnąć": true,
-	"niknąć":     true,
-	"pachnąć":    true,
+	// NOTE: niknąć and pachnąć removed - corpus shows they keep n in virile
+	// (uniknęli, pachnęli, not unikli, pachli)
 }
 
 // irregularPastVerbs contains past tense paradigms for verbs that cannot
@@ -909,14 +909,14 @@ var irregularPastVerbs = map[string]PastTense{
 		Pl3V: "przetwarli", Pl3NV: "przetwarły",
 	},
 
-	// roztworzyć has mixed pattern: sg3m retains tworzy-, but sg3f uses twar-
+	// roztworzyć → roztwarł (uses twar- stem throughout, like przetworzyć)
 	"roztworzyć": {
-		Sg1M: "roztworzył", Sg1F: "roztwarła",
-		Sg2M: "roztworzyłeś", Sg2F: "roztwarłaś",
-		Sg3M: "roztworzył", Sg3F: "roztwarła", Sg3N: "roztworzyło",
-		Pl1V: "roztworzyli", Pl1NV: "roztworzyły",
-		Pl2V: "roztworzyliście", Pl2NV: "roztworzyłyście",
-		Pl3V: "roztworzyli", Pl3NV: "roztworzyły",
+		Sg1M: "roztwarłem", Sg1F: "roztwarłam",
+		Sg2M: "roztwarłeś", Sg2F: "roztwarłaś",
+		Sg3M: "roztwarł", Sg3F: "roztwarła", Sg3N: "roztwarło",
+		Pl1V: "roztwarliśmy", Pl1NV: "roztwarłyśmy",
+		Pl2V: "roztwarliście", Pl2NV: "roztwarłyście",
+		Pl3V: "roztwarli", Pl3NV: "roztwarły",
 	},
 
 	// prać epenthetic forms: keep epenthetic vowel throughout
@@ -975,6 +975,219 @@ var irregularPastVerbs = map[string]PastTense{
 		Pl1V: "żarliśmy", Pl1NV: "żarłyśmy",
 		Pl2V: "żarliście", Pl2NV: "żarłyście",
 		Pl3V: "żarli", Pl3NV: "żarły",
+	},
+
+	// źreć → ziarł (suppletive stem ziar-, NOT źrał)
+	// This is a separate lexeme from żreć
+	"źreć": {
+		Sg1M: "ziarłem", Sg1F: "ziarłam",
+		Sg2M: "ziarłeś", Sg2F: "ziarłaś",
+		Sg3M: "ziarł", Sg3F: "ziarła", Sg3N: "ziarło",
+		Pl1V: "ziarliśmy", Pl1NV: "ziarłyśmy",
+		Pl2V: "ziarliście", Pl2NV: "ziarłyście",
+		Pl3V: "ziarli", Pl3NV: "ziarły",
+	},
+
+	// zeźreć → zziarł (ze + źreć → zziar-)
+	"zeźreć": {
+		Sg1M: "zziarłem", Sg1F: "zziarłam",
+		Sg2M: "zziarłeś", Sg2F: "zziarłaś",
+		Sg3M: "zziarł", Sg3F: "zziarła", Sg3N: "zziarło",
+		Pl1V: "zziarliśmy", Pl1NV: "zziarłyśmy",
+		Pl2V: "zziarliście", Pl2NV: "zziarłyście",
+		Pl3V: "zziarli", Pl3NV: "zziarły",
+	},
+
+	// zeźrzeć → zziarł (variant spelling of zeźreć)
+	"zeźrzeć": {
+		Sg1M: "zziarłem", Sg1F: "zziarłam",
+		Sg2M: "zziarłeś", Sg2F: "zziarłaś",
+		Sg3M: "zziarł", Sg3F: "zziarła", Sg3N: "zziarło",
+		Pl1V: "zziarliśmy", Pl1NV: "zziarłyśmy",
+		Pl2V: "zziarliście", Pl2NV: "zziarłyście",
+		Pl3V: "zziarli", Pl3NV: "zziarły",
+	},
+
+	// zrzeć → żarł (z + żreć with orthographic zż → ż simplification)
+	"zrzeć": {
+		Sg1M: "żarłem", Sg1F: "żarłam",
+		Sg2M: "żarłeś", Sg2F: "żarłaś",
+		Sg3M: "żarł", Sg3F: "żarła", Sg3N: "żarło",
+		Pl1V: "żarliśmy", Pl1NV: "żarłyśmy",
+		Pl2V: "żarliście", Pl2NV: "żarłyście",
+		Pl3V: "żarli", Pl3NV: "żarły",
+	},
+
+	// przywrzeć → przywarł (uses war- stem, NOT przywrzał)
+	"przywrzeć": {
+		Sg1M: "przywarłem", Sg1F: "przywarłam",
+		Sg2M: "przywarłeś", Sg2F: "przywarłaś",
+		Sg3M: "przywarł", Sg3F: "przywarła", Sg3N: "przywarło",
+		Pl1V: "przywarliśmy", Pl1NV: "przywarłyśmy",
+		Pl2V: "przywarliście", Pl2NV: "przywarłyście",
+		Pl3V: "przywarli", Pl3NV: "przywarły",
+	},
+
+	// rozeprzeć → rozeprzał (keeps epenthetic e, NOT rozparł)
+	"rozeprzeć": {
+		Sg1M: "rozeprzałem", Sg1F: "rozeprzałam",
+		Sg2M: "rozeprzałeś", Sg2F: "rozeprzałaś",
+		Sg3M: "rozeprzał", Sg3F: "rozeprzała", Sg3N: "rozeprzało",
+		Pl1V: "rozeprzeliśmy", Pl1NV: "rozeprzałyśmy",
+		Pl2V: "rozeprzeliście", Pl2NV: "rozeprzałyście",
+		Pl3V: "rozeprzeli", Pl3NV: "rozeprzały",
+	},
+
+	// rozewrzeć → rozewrzał (keeps epenthetic e, NOT rozwrzał)
+	"rozewrzeć": {
+		Sg1M: "rozewrzałem", Sg1F: "rozewrzałam",
+		Sg2M: "rozewrzałeś", Sg2F: "rozewrzałaś",
+		Sg3M: "rozewrzał", Sg3F: "rozewrzała", Sg3N: "rozewrzało",
+		Pl1V: "rozewrzeliśmy", Pl1NV: "rozewrzałyśmy",
+		Pl2V: "rozewrzeliście", Pl2NV: "rozewrzałyście",
+		Pl3V: "rozewrzeli", Pl3NV: "rozewrzały",
+	},
+
+	// rozpostrzeć → rozpostarł (post- + trzeć → -tar- stem)
+	"rozpostrzeć": {
+		Sg1M: "rozpostarłem", Sg1F: "rozpostarłam",
+		Sg2M: "rozpostarłeś", Sg2F: "rozpostarłaś",
+		Sg3M: "rozpostarł", Sg3F: "rozpostarła", Sg3N: "rozpostarło",
+		Pl1V: "rozpostarliśmy", Pl1NV: "rozpostarłyśmy",
+		Pl2V: "rozpostarliście", Pl2NV: "rozpostarłyście",
+		Pl3V: "rozpostarli", Pl3NV: "rozpostarły",
+	},
+
+	// krzywoprzysięgnąć → krzywoprzysiągł (drops n, ę→ą in masculine)
+	"krzywoprzysięgnąć": {
+		Sg1M: "krzywoprzysiągłem", Sg1F: "krzywoprzysięgłam",
+		Sg2M: "krzywoprzysiągłeś", Sg2F: "krzywoprzysięgłaś",
+		Sg3M: "krzywoprzysiągł", Sg3F: "krzywoprzysięgła", Sg3N: "krzywoprzysięgło",
+		Pl1V: "krzywoprzysięgliśmy", Pl1NV: "krzywoprzysięgłyśmy",
+		Pl2V: "krzywoprzysięgliście", Pl2NV: "krzywoprzysięgłyście",
+		Pl3V: "krzywoprzysięgli", Pl3NV: "krzywoprzysięgły",
+	},
+
+	// nagadnąć → nagadnął (n-KEPT, unlike other -gadnąć verbs)
+	"nagadnąć": {
+		Sg1M: "nagadnąłem", Sg1F: "nagadnęłam",
+		Sg2M: "nagadnąłeś", Sg2F: "nagadnęłaś",
+		Sg3M: "nagadnął", Sg3F: "nagadnęła", Sg3N: "nagadnęło",
+		Pl1V: "nagadnęliśmy", Pl1NV: "nagadnęłyśmy",
+		Pl2V: "nagadnęliście", Pl2NV: "nagadnęłyście",
+		Pl3V: "nagadnęli", Pl3NV: "nagadnęły",
+	},
+
+	// zagadnąć → zagadnął (n-KEPT, unlike other -gadnąć verbs)
+	"zagadnąć": {
+		Sg1M: "zagadnąłem", Sg1F: "zagadnęłam",
+		Sg2M: "zagadnąłeś", Sg2F: "zagadnęłaś",
+		Sg3M: "zagadnął", Sg3F: "zagadnęła", Sg3N: "zagadnęło",
+		Pl1V: "zagadnęliśmy", Pl1NV: "zagadnęłyśmy",
+		Pl2V: "zagadnęliście", Pl2NV: "zagadnęłyście",
+		Pl3V: "zagadnęli", Pl3NV: "zagadnęły",
+	},
+
+	// rymsnąć → rymsnął/rymsnęła but rymsli (MIXED n-drop, no s→ś in virile)
+	// Singular/non-virile keep n, virile drops n (and doesn't palatalize s)
+	"rymsnąć": {
+		Sg1M: "rymsnąłem", Sg1F: "rymsnęłam",
+		Sg2M: "rymsnąłeś", Sg2F: "rymsnęłaś",
+		Sg3M: "rymsł", Sg3F: "rymsnęła", Sg3N: "rymsnęło",
+		Pl1V: "rymsliśmy", Pl1NV: "rymsnęłyśmy",
+		Pl2V: "rymsliście", Pl2NV: "rymsnęłyście",
+		Pl3V: "rymsli", Pl3NV: "rymsnęły",
+	},
+
+	// zastrzęgnąć → zastrzęgł (n-dropped, but NO ę→ą alternation in masculine)
+	"zastrzęgnąć": {
+		Sg1M: "zastrzęgłem", Sg1F: "zastrzęgłam",
+		Sg2M: "zastrzęgłeś", Sg2F: "zastrzęgłaś",
+		Sg3M: "zastrzęgł", Sg3F: "zastrzęgła", Sg3N: "zastrzęgło",
+		Pl1V: "zastrzęgliśmy", Pl1NV: "zastrzęgłyśmy",
+		Pl2V: "zastrzęgliście", Pl2NV: "zastrzęgłyście",
+		Pl3V: "zastrzęgli", Pl3NV: "zastrzęgły",
+	},
+
+	// przeschnąć → przesechł (epenthetic 'e' for prze+schnąć)
+	"przeschnąć": {
+		Sg1M: "przeschłem", Sg1F: "przeschłam",
+		Sg2M: "przeschłeś", Sg2F: "przeschłaś",
+		Sg3M: "przesechł", Sg3F: "przeschła", Sg3N: "przeschło",
+		Pl1V: "przeschliśmy", Pl1NV: "przeschłyśmy",
+		Pl2V: "przeschliście", Pl2NV: "przeschłyście",
+		Pl3V: "przeschli", Pl3NV: "przeschły",
+	},
+
+	// wpółgasnąć → wpółgasł (n-dropped, wpół+gasnąć)
+	"wpółgasnąć": {
+		Sg1M: "wpółgasłem", Sg1F: "wpółgasłam",
+		Sg2M: "wpółgasłeś", Sg2F: "wpółgasłaś",
+		Sg3M: "wpółgasł", Sg3F: "wpółgasła", Sg3N: "wpółgasło",
+		Pl1V: "wpółgaśliśmy", Pl1NV: "wpółgasłyśmy",
+		Pl2V: "wpółgaśliście", Pl2NV: "wpółgasłyście",
+		Pl3V: "wpółgaśli", Pl3NV: "wpółgasły",
+	},
+
+	// wskrzesnąć → wskrzesł (n-dropped)
+	"wskrzesnąć": {
+		Sg1M: "wskrzesłem", Sg1F: "wskrzesłam",
+		Sg2M: "wskrzesłeś", Sg2F: "wskrzesłaś",
+		Sg3M: "wskrzesł", Sg3F: "wskrzesła", Sg3N: "wskrzesło",
+		Pl1V: "wskrześliśmy", Pl1NV: "wskrzesłyśmy",
+		Pl2V: "wskrześliście", Pl2NV: "wskrzesłyście",
+		Pl3V: "wskrześli", Pl3NV: "wskrzesły",
+	},
+
+	// przyosłabnąć → przyosłabł (n-dropped, przy+osłabnąć)
+	"przyosłabnąć": {
+		Sg1M: "przyosłabłem", Sg1F: "przyosłabłam",
+		Sg2M: "przyosłabłeś", Sg2F: "przyosłabłaś",
+		Sg3M: "przyosłabł", Sg3F: "przyosłabła", Sg3N: "przyosłabło",
+		Pl1V: "przyosłabliśmy", Pl1NV: "przyosłabłyśmy",
+		Pl2V: "przyosłabliście", Pl2NV: "przyosłabłyście",
+		Pl3V: "przyosłabli", Pl3NV: "przyosłabły",
+	},
+
+	// zmierzchnąć → zmierzchł (n-dropped, note: no virile plural because impersonal)
+	"zmierzchnąć": {
+		Sg1M: "zmierzchłem", Sg1F: "zmierzchłam",
+		Sg2M: "zmierzchłeś", Sg2F: "zmierzchłaś",
+		Sg3M: "zmierzchł", Sg3F: "zmierzchła", Sg3N: "zmierzchło",
+		Pl1V: "zmierzchliśmy", Pl1NV: "zmierzchłyśmy",
+		Pl2V: "zmierzchliście", Pl2NV: "zmierzchłyście",
+		Pl3V: "zmierzchli", Pl3NV: "zmierzchły",
+	},
+
+	// zabrzęknąć → zabrzęknął/zabrzęknęła but zabrzękli (MIXED n-drop)
+	// Singular/non-virile keep n, virile drops n
+	"zabrzęknąć": {
+		Sg1M: "zabrzęknąłem", Sg1F: "zabrzęknęłam",
+		Sg2M: "zabrzęknąłeś", Sg2F: "zabrzęknęłaś",
+		Sg3M: "zabrzękł", Sg3F: "zabrzęknęła", Sg3N: "zabrzęknęło",
+		Pl1V: "zabrzękliśmy", Pl1NV: "zabrzęknęłyśmy",
+		Pl2V: "zabrzękliście", Pl2NV: "zabrzęknęłyście",
+		Pl3V: "zabrzękli", Pl3NV: "zabrzęknęły",
+	},
+
+	// oślizgnąć → oślizgnął/oślizgnęła but oślizgli (MIXED n-drop)
+	"oślizgnąć": {
+		Sg1M: "oślizgnąłem", Sg1F: "oślizgnęłam",
+		Sg2M: "oślizgnąłeś", Sg2F: "oślizgnęłaś",
+		Sg3M: "oślizgł", Sg3F: "oślizgnęła", Sg3N: "oślizgnęło",
+		Pl1V: "oślizgliśmy", Pl1NV: "oślizgnęłyśmy",
+		Pl2V: "oślizgliście", Pl2NV: "oślizgnęłyście",
+		Pl3V: "oślizgli", Pl3NV: "oślizgnęły",
+	},
+
+	// obślizgnąć → obślizgnął/obślizgnęła but obślizgli (MIXED n-drop)
+	"obślizgnąć": {
+		Sg1M: "obślizgnąłem", Sg1F: "obślizgnęłam",
+		Sg2M: "obślizgnąłeś", Sg2F: "obślizgnęłaś",
+		Sg3M: "obślizgnął", Sg3F: "obślizgnęła", Sg3N: "obślizgnęło",
+		Pl1V: "obślizgliśmy", Pl1NV: "obślizgnęłyśmy",
+		Pl2V: "obślizgliście", Pl2NV: "obślizgnęłyście",
+		Pl3V: "obślizgli", Pl3NV: "obślizgnęły",
 	},
 
 	// brać → brał (simple -ać, but included as base for prefixes)

@@ -372,10 +372,12 @@ func palatalizeForVirile(stem, infinitive string) string {
 		return string(runes)
 	}
 
-	// Only palatalize z→ź if the stem contains ę
-	// grzęznąć → grzęźli (has ę)
-	// marznąć → marzli (no ę, no palatalization)
-	if last == 'z' && strings.ContainsRune(infinitive, 'ę') {
+	// Only palatalize z→ź if the STEM (not ending) contains ę or ą
+	// grzęznąć → grzęźli (stem "grzęz" has ę)
+	// wiąznąć → wiąźli (stem "wiąz" has ą, which alternates to ę)
+	// marznąć → marzli (stem "marz" has no ę or ą, just regular 'a')
+	// Note: Check stem, not infinitive, because all -nąć verbs have ą in ending
+	if last == 'z' && (strings.ContainsRune(stem, 'ę') || strings.ContainsRune(stem, 'ą')) {
 		runes[len(runes)-1] = 'ź'
 		return string(runes)
 	}
