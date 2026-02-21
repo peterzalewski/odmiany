@@ -4,6 +4,32 @@ import "strings"
 
 // pastHomographs contains verbs with multiple valid past tense paradigms.
 var pastHomographs = map[string][]PastParadigm{
+	// wlec: "to drag" has two valid sg3m forms (wlekł/wlókł), but all other forms use wlek-
+	"wlec": {
+		{
+			PastTense: PastTense{
+				Sg1M:  "wlekłem", Sg1F: "wlekłam",
+				Sg2M:  "wlekłeś", Sg2F: "wlekłaś",
+				Sg3M:  "wlekł", Sg3F: "wlekła", Sg3N: "wlekło",
+				Pl1V:  "wlekliśmy", Pl1NV: "wlekłyśmy",
+				Pl2V:  "wlekliście", Pl2NV: "wlekłyście",
+				Pl3V:  "wlekli", Pl3NV: "wlekły",
+			},
+			Gloss: "sg3m wlekł variant",
+		},
+		{
+			PastTense: PastTense{
+				Sg1M:  "wlekłem", Sg1F: "wlekłam",
+				Sg2M:  "wlekłeś", Sg2F: "wlekłaś",
+				Sg3M:  "wlókł", Sg3F: "wlekła", Sg3N: "wlekło",
+				Pl1V:  "wlekliśmy", Pl1NV: "wlekłyśmy",
+				Pl2V:  "wlekliście", Pl2NV: "wlekłyście",
+				Pl3V:  "wlekli", Pl3NV: "wlekły",
+			},
+			Gloss: "sg3m wlókł variant",
+		},
+	},
+
 	// paść: "to fall" (padł) vs "to graze" (pasł)
 	"paść": {
 		{
@@ -64,9 +90,47 @@ func buildPascHomograph(prefix string) []PastParadigm {
 
 func init() {
 	// Add homographs for prefixed -paść verbs
-	prefixes := []string{"do", "na", "od", "o", "pod", "po", "prze", "przy", "roz", "s", "u", "w", "wy", "za", "zaprze"}
-	for _, p := range prefixes {
+	pascPrefixes := []string{"do", "na", "od", "o", "pod", "po", "prze", "przy", "roz", "s", "u", "w", "wy", "za", "zaprze"}
+	for _, p := range pascPrefixes {
 		pastHomographs[p+"paść"] = buildPascHomograph(p)
+	}
+
+	// Add homographs for prefixed -wlec verbs
+	// wlec has two valid sg3m forms (wlekł/wlókł), all other forms use wlek-
+	wlecPrefixes := []string{"do", "na", "ob", "od", "o", "pod", "po", "prze", "przy", "roz", "u", "we", "w", "wy", "za", "ze", "z"}
+	for _, p := range wlecPrefixes {
+		pastHomographs[p+"wlec"] = buildWlecHomograph(p)
+	}
+}
+
+// buildWlecHomograph creates homograph entries for prefixed -wlec verbs.
+// These verbs have two valid sg3m forms (wlekł/wlókł) but all other forms use wlek-.
+func buildWlecHomograph(prefix string) []PastParadigm {
+	return []PastParadigm{
+		// wlekł variant (no ó)
+		{
+			PastTense: PastTense{
+				Sg1M:  prefix + "wlekłem", Sg1F: prefix + "wlekłam",
+				Sg2M:  prefix + "wlekłeś", Sg2F: prefix + "wlekłaś",
+				Sg3M:  prefix + "wlekł", Sg3F: prefix + "wlekła", Sg3N: prefix + "wlekło",
+				Pl1V:  prefix + "wlekliśmy", Pl1NV: prefix + "wlekłyśmy",
+				Pl2V:  prefix + "wlekliście", Pl2NV: prefix + "wlekłyście",
+				Pl3V:  prefix + "wlekli", Pl3NV: prefix + "wlekły",
+			},
+			Gloss: "sg3m wlekł variant",
+		},
+		// wlókł variant (with ó in sg3m only)
+		{
+			PastTense: PastTense{
+				Sg1M:  prefix + "wlekłem", Sg1F: prefix + "wlekłam",
+				Sg2M:  prefix + "wlekłeś", Sg2F: prefix + "wlekłaś",
+				Sg3M:  prefix + "wlókł", Sg3F: prefix + "wlekła", Sg3N: prefix + "wlekło",
+				Pl1V:  prefix + "wlekliśmy", Pl1NV: prefix + "wlekłyśmy",
+				Pl2V:  prefix + "wlekliście", Pl2NV: prefix + "wlekłyście",
+				Pl3V:  prefix + "wlekli", Pl3NV: prefix + "wlekły",
+			},
+			Gloss: "sg3m wlókł variant",
+		},
 	}
 }
 
@@ -672,6 +736,237 @@ var irregularPastVerbs = map[string]PastTense{
 		Pl3V: "marli", Pl3NV: "marły",
 	},
 
+	// umrzeć → umarł (perfective of mrzeć, needs separate entry for double-prefix handling)
+	// obumrzeć = ob + umrzeć, not ob + u + mrzeć
+	"umrzeć": {
+		Sg1M: "umarłem", Sg1F: "umarłam",
+		Sg2M: "umarłeś", Sg2F: "umarłaś",
+		Sg3M: "umarł", Sg3F: "umarła", Sg3N: "umarło",
+		Pl1V: "umarliśmy", Pl1NV: "umarłyśmy",
+		Pl2V: "umarliście", Pl2NV: "umarłyście",
+		Pl3V: "umarli", Pl3NV: "umarły",
+	},
+
+	// mleć → mełł/mełła (grind - suppletive stem with łł gemination)
+	"mleć": {
+		Sg1M: "mełłem", Sg1F: "mełłam",
+		Sg2M: "mełłeś", Sg2F: "mełłaś",
+		Sg3M: "mełł", Sg3F: "mełła", Sg3N: "mełło",
+		Pl1V: "mełliśmy", Pl1NV: "mełłyśmy",
+		Pl2V: "mełliście", Pl2NV: "mełłyście",
+		Pl3V: "mełli", Pl3NV: "mełły",
+	},
+
+	// pleć → pełł/pełła (weed - suppletive stem with łł gemination)
+	"pleć": {
+		Sg1M: "pełłem", Sg1F: "pełłam",
+		Sg2M: "pełłeś", Sg2F: "pełłaś",
+		Sg3M: "pełł", Sg3F: "pełła", Sg3N: "pełło",
+		Pl1V: "pełliśmy", Pl1NV: "pełłyśmy",
+		Pl2V: "pełliście", Pl2NV: "pełłyście",
+		Pl3V: "pełli", Pl3NV: "pełły",
+	},
+
+	// żec → żegł/żegła (burn/sting)
+	"żec": {
+		Sg1M: "żegłem", Sg1F: "żegłam",
+		Sg2M: "żegłeś", Sg2F: "żegłaś",
+		Sg3M: "żegł", Sg3F: "żegła", Sg3N: "żegło",
+		Pl1V: "żegliśmy", Pl1NV: "żegłyśmy",
+		Pl2V: "żegliście", Pl2NV: "żegłyście",
+		Pl3V: "żegli", Pl3NV: "żegły",
+	},
+
+	// podżec: asymmetric epenthetic - sg3m strips, others keep
+	// sg3m = podżegł, sg3f = podeżgła (NOT podżegła)
+	"podżec": {
+		Sg1M: "podeżgłem", Sg1F: "podeżgłam",
+		Sg2M: "podeżgłeś", Sg2F: "podeżgłaś",
+		Sg3M: "podżegł", Sg3F: "podeżgła", Sg3N: "podeżgło",
+		Pl1V: "podeżgliśmy", Pl1NV: "podeżgłyśmy",
+		Pl2V: "podeżgliście", Pl2NV: "podeżgłyście",
+		Pl3V: "podeżgli", Pl3NV: "podeżgły",
+	},
+
+	// rozżec: asymmetric epenthetic
+	"rozżec": {
+		Sg1M: "rozeżgłem", Sg1F: "rozeżgłam",
+		Sg2M: "rozeżgłeś", Sg2F: "rozeżgłaś",
+		Sg3M: "rozżegł", Sg3F: "rozeżgła", Sg3N: "rozeżgło",
+		Pl1V: "rozeżgliśmy", Pl1NV: "rozeżgłyśmy",
+		Pl2V: "rozeżgliście", Pl2NV: "rozeżgłyście",
+		Pl3V: "rozeżgli", Pl3NV: "rozeżgły",
+	},
+
+	// zżec: asymmetric epenthetic
+	"zżec": {
+		Sg1M: "zeżgłem", Sg1F: "zeżgłam",
+		Sg2M: "zeżgłeś", Sg2F: "zeżgłaś",
+		Sg3M: "zżegł", Sg3F: "zeżgła", Sg3N: "zeżgło",
+		Pl1V: "zeżgliśmy", Pl1NV: "zeżgłyśmy",
+		Pl2V: "zeżgliście", Pl2NV: "zeżgłyście",
+		Pl3V: "zeżgli", Pl3NV: "zeżgły",
+	},
+
+	// Compound prefixed verbs that need explicit entries:
+
+	// spostrzec = s+po+strzec → spostrzegł (NOT spostrzekł)
+	"spostrzec": {
+		Sg1M: "spostrzegłem", Sg1F: "spostrzegłam",
+		Sg2M: "spostrzegłeś", Sg2F: "spostrzegłaś",
+		Sg3M: "spostrzegł", Sg3F: "spostrzegła", Sg3N: "spostrzegło",
+		Pl1V: "spostrzegliśmy", Pl1NV: "spostrzegłyśmy",
+		Pl2V: "spostrzegliście", Pl2NV: "spostrzegłyście",
+		Pl3V: "spostrzegli", Pl3NV: "spostrzegły",
+	},
+
+	// zapobiec = za+po+biec → zapobiegł (NOT zapobiekł)
+	"zapobiec": {
+		Sg1M: "zapobiegłem", Sg1F: "zapobiegłam",
+		Sg2M: "zapobiegłeś", Sg2F: "zapobiegłaś",
+		Sg3M: "zapobiegł", Sg3F: "zapobiegła", Sg3N: "zapobiegło",
+		Pl1V: "zapobiegliśmy", Pl1NV: "zapobiegłyśmy",
+		Pl2V: "zapobiegliście", Pl2NV: "zapobiegłyście",
+		Pl3V: "zapobiegli", Pl3NV: "zapobiegły",
+	},
+
+	// współubiec = współ+u+biec → współubiegł
+	"współubiec": {
+		Sg1M: "współubiegłem", Sg1F: "współubiegłam",
+		Sg2M: "współubiegłeś", Sg2F: "współubiegłaś",
+		Sg3M: "współubiegł", Sg3F: "współubiegła", Sg3N: "współubiegło",
+		Pl1V: "współubiegliśmy", Pl1NV: "współubiegłyśmy",
+		Pl2V: "współubiegliście", Pl2NV: "współubiegłyście",
+		Pl3V: "współubiegli", Pl3NV: "współubiegły",
+	},
+
+	// sprzeć → sprzał (NOT sparł - different from s+przeć)
+	"sprzeć": {
+		Sg1M: "sprzałem", Sg1F: "sprzałam",
+		Sg2M: "sprzałeś", Sg2F: "sprzałaś",
+		Sg3M: "sprzał", Sg3F: "sprzała", Sg3N: "sprzało",
+		Pl1V: "sprzeliśmy", Pl1NV: "sprzałyśmy",
+		Pl2V: "sprzeliście", Pl2NV: "sprzałyście",
+		Pl3V: "sprzeli", Pl3NV: "sprzały",
+	},
+
+	// zeprzeć → sparł (ze- assimilates to s-)
+	"zeprzeć": {
+		Sg1M: "sparłem", Sg1F: "sparłam",
+		Sg2M: "sparłeś", Sg2F: "sparłaś",
+		Sg3M: "sparł", Sg3F: "sparła", Sg3N: "sparło",
+		Pl1V: "sparliśmy", Pl1NV: "sparłyśmy",
+		Pl2V: "sparliście", Pl2NV: "sparłyście",
+		Pl3V: "sparli", Pl3NV: "sparły",
+	},
+
+	// zetrzeć → starł (ze- assimilates to s-)
+	"zetrzeć": {
+		Sg1M: "starłem", Sg1F: "starłam",
+		Sg2M: "starłeś", Sg2F: "starłaś",
+		Sg3M: "starł", Sg3F: "starła", Sg3N: "starło",
+		Pl1V: "starliśmy", Pl1NV: "starłyśmy",
+		Pl2V: "starliście", Pl2NV: "starłyście",
+		Pl3V: "starli", Pl3NV: "starły",
+	},
+
+	// wesprzeć → wsparł (we- assimilates to ws-)
+	"wesprzeć": {
+		Sg1M: "wsparłem", Sg1F: "wsparłam",
+		Sg2M: "wsparłeś", Sg2F: "wsparłaś",
+		Sg3M: "wsparł", Sg3F: "wsparła", Sg3N: "wsparło",
+		Pl1V: "wsparliśmy", Pl1NV: "wsparłyśmy",
+		Pl2V: "wsparliście", Pl2NV: "wsparłyście",
+		Pl3V: "wsparli", Pl3NV: "wsparły",
+	},
+
+	// wetrzeć → wtarł (we- assimilates to w-)
+	"wetrzeć": {
+		Sg1M: "wtarłem", Sg1F: "wtarłam",
+		Sg2M: "wtarłeś", Sg2F: "wtarłaś",
+		Sg3M: "wtarł", Sg3F: "wtarła", Sg3N: "wtarło",
+		Pl1V: "wtarliśmy", Pl1NV: "wtarłyśmy",
+		Pl2V: "wtarliście", Pl2NV: "wtarłyście",
+		Pl3V: "wtarli", Pl3NV: "wtarły",
+	},
+
+	// otworzyć family: special stem twar- (not tworzy-)
+	"otworzyć": {
+		Sg1M: "otwarłem", Sg1F: "otwarłam",
+		Sg2M: "otwarłeś", Sg2F: "otwarłaś",
+		Sg3M: "otwarł", Sg3F: "otwarła", Sg3N: "otwarło",
+		Pl1V: "otwarliśmy", Pl1NV: "otwarłyśmy",
+		Pl2V: "otwarliście", Pl2NV: "otwarłyście",
+		Pl3V: "otwarli", Pl3NV: "otwarły",
+	},
+
+	"przetworzyć": {
+		Sg1M: "przetwarłem", Sg1F: "przetwarłam",
+		Sg2M: "przetwarłeś", Sg2F: "przetwarłaś",
+		Sg3M: "przetwarł", Sg3F: "przetwarła", Sg3N: "przetwarło",
+		Pl1V: "przetwarliśmy", Pl1NV: "przetwarłyśmy",
+		Pl2V: "przetwarliście", Pl2NV: "przetwarłyście",
+		Pl3V: "przetwarli", Pl3NV: "przetwarły",
+	},
+
+	// roztworzyć has mixed pattern: sg3m retains tworzy-, but sg3f uses twar-
+	"roztworzyć": {
+		Sg1M: "roztworzył", Sg1F: "roztwarła",
+		Sg2M: "roztworzyłeś", Sg2F: "roztwarłaś",
+		Sg3M: "roztworzył", Sg3F: "roztwarła", Sg3N: "roztworzyło",
+		Pl1V: "roztworzyli", Pl1NV: "roztworzyły",
+		Pl2V: "roztworzyliście", Pl2NV: "roztworzyłyście",
+		Pl3V: "roztworzyli", Pl3NV: "roztworzyły",
+	},
+
+	// prać epenthetic forms: keep epenthetic vowel throughout
+	"obeprać": {
+		Sg1M: "obeprałem", Sg1F: "obeprałam",
+		Sg2M: "obeprałeś", Sg2F: "obeprałaś",
+		Sg3M: "obeprał", Sg3F: "obeprała", Sg3N: "obeprało",
+		Pl1V: "obepraliśmy", Pl1NV: "obeprałyśmy",
+		Pl2V: "obepraliście", Pl2NV: "obeprałyście",
+		Pl3V: "obeprali", Pl3NV: "obeprały",
+	},
+
+	"odeprać": {
+		Sg1M: "odeprałem", Sg1F: "odeprałam",
+		Sg2M: "odeprałeś", Sg2F: "odeprałaś",
+		Sg3M: "odeprał", Sg3F: "odeprała", Sg3N: "odeprało",
+		Pl1V: "odepraliśmy", Pl1NV: "odeprałyśmy",
+		Pl2V: "odepraliście", Pl2NV: "odeprałyście",
+		Pl3V: "odeprali", Pl3NV: "odeprały",
+	},
+
+	"podeprać": {
+		Sg1M: "podeprałem", Sg1F: "podeprałam",
+		Sg2M: "podeprałeś", Sg2F: "podeprałaś",
+		Sg3M: "podeprał", Sg3F: "podeprała", Sg3N: "podeprało",
+		Pl1V: "podepraliśmy", Pl1NV: "podeprałyśmy",
+		Pl2V: "podepraliście", Pl2NV: "podeprałyście",
+		Pl3V: "podeprali", Pl3NV: "podeprały",
+	},
+
+	// wejść → wszedł (special we- prefix)
+	"wejść": {
+		Sg1M: "wszedłem", Sg1F: "weszłam",
+		Sg2M: "wszedłeś", Sg2F: "weszłaś",
+		Sg3M: "wszedł", Sg3F: "weszła", Sg3N: "weszło",
+		Pl1V: "weszliśmy", Pl1NV: "weszłyśmy",
+		Pl2V: "weszliście", Pl2NV: "weszłyście",
+		Pl3V: "weszli", Pl3NV: "weszły",
+	},
+
+	// wznijść (archaic) → wzeszedł
+	"wznijść": {
+		Sg1M: "wzeszedłem", Sg1F: "wzeszłam",
+		Sg2M: "wzeszedłeś", Sg2F: "wzeszłaś",
+		Sg3M: "wzeszedł", Sg3F: "wzeszła", Sg3N: "wzeszło",
+		Pl1V: "wzeszliśmy", Pl1NV: "wzeszłyśmy",
+		Pl2V: "wzeszliście", Pl2NV: "wzeszłyście",
+		Pl3V: "wzeszli", Pl3NV: "wzeszły",
+	},
+
 	// żreć → żarł/żarła (e→a alternation)
 	"żreć": {
 		Sg1M: "żarłem", Sg1F: "żarłam",
@@ -898,15 +1193,9 @@ var irregularPastVerbs = map[string]PastTense{
 		Pl3V: "piekli", Pl3NV: "piekły",
 	},
 
-	// wlec → wlókł/wlokła (ó→o alternation)
-	"wlec": {
-		Sg1M: "wlokłem", Sg1F: "wlokłam",
-		Sg2M: "wlokłeś", Sg2F: "wlokłaś",
-		Sg3M: "wlókł", Sg3F: "wlokła", Sg3N: "wlokło",
-		Pl1V: "wlekliśmy", Pl1NV: "wlokłyśmy",
-		Pl2V: "wlekliście", Pl2NV: "wlokłyście",
-		Pl3V: "wlekli", Pl3NV: "wlokły",
-	},
+	// wlec: removed from irregularPastVerbs - handled via pastHomographs
+	// wlec is a homograph with two valid sg3m forms (wlekł/wlókł), but all
+	// other forms use the wlek- stem.
 
 	// siąść family need special handling
 	// usiąść → usiadł
@@ -973,6 +1262,11 @@ var pastPrefixableVerbs = map[string]bool{
 	"wiedzieć": true, "siedzieć": true, "widzieć": true,
 	"biec": true, "lec": true, "rzec": true, "ciec": true, "strzec": true, "piec": true, "wlec": true,
 	"rosnąć": true, "rość": true, "schnąć": true, "przysięgnąć": true,
+	// Suppletive/special stems
+	"umrzeć": true, // for ob-/od-/wy- prefixes (obumrzeć, wymrzeć)
+	"mleć":   true, // for na-/o-/po-/prze-/u-/z- prefixes (namleć, zmleć)
+	"pleć":   true, // for na-/o-/po-/u-/wy- prefixes (napleć, wypleć)
+	"żec":    true, // for pod-/przy-/wy-/za- prefixes (podżec, wyżec)
 }
 
 // lookupPastIrregular checks if a verb has an irregular past tense paradigm.
@@ -1143,11 +1437,12 @@ func stripEpentheticVowel(prefix string, baseForm string) string {
 	// Don't strip if it would create an unpronounceable or unusual cluster
 	// e.g., ze + siadł → zesiadł (not zsiadł)
 	// e.g., ze + brał → zebrał (not zbrał)
-	// The epenthetic vowel is kept before: s, ś, z, ź, ż, b, p, m, w
+	// The epenthetic vowel is kept before: s, ś, z, ź, ż, b, p, w
+	// NOTE: 'm' is NOT in this list because "zm" is a common, easy cluster (zmarł, zmełł)
 	if prefix == "ze" {
 		keepVowel := map[rune]bool{
 			's': true, 'ś': true, 'z': true, 'ź': true, 'ż': true,
-			'b': true, 'p': true, 'm': true, 'w': true,
+			'b': true, 'p': true, 'w': true,
 		}
 		if keepVowel[baseFirstChar] {
 			return prefix
