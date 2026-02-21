@@ -16,7 +16,7 @@ func VerbalNoun(infinitive string) ([]string, error) {
 	}
 
 	// 2. -ać → -anie
-	if strings.HasSuffix(infinitive, "ać") && !strings.HasSuffix(infinitive, "nąć") {
+	if strings.HasSuffix(infinitive, "ać") {
 		stem := strings.TrimSuffix(infinitive, "ać")
 		return []string{stem + "anie"}, nil
 	}
@@ -67,7 +67,7 @@ func verbalNounNac(infinitive string) []string {
 // softenBeforeNForGerund softens the final consonant of a stem before ń
 // in verbal noun derivation.
 //   - s → ś unless preceded by p, k, or m (ps, ks, ms clusters don't soften)
-//   - z → ź unless z is part of rz or cz digraph, or łz cluster
+//   - z → ź unless z is part of rz, cz, or łz cluster
 func softenBeforeNForGerund(stem string) string {
 	if strings.HasSuffix(stem, "s") {
 		if len(stem) >= 2 {
@@ -310,7 +310,8 @@ var irregularVerbalNouns = map[string][]string{
 	"trząść": {"trzęsienie"},
 
 	// -jść (prefixed iść): the verbal noun stem is "jście"
-	"jść": {"jście"},
+	"jść":   {"jście"},
+	"nijść": {"nijście"},
 	// -niść: wniść/wyniść/wzniść/zniść
 	"niść": {"niście"},
 
@@ -405,74 +406,68 @@ var irregularVerbalNouns = map[string][]string{
 	"zrzeć":   {"żarcie"},
 }
 
-// verbalNounPrefixableVerbs lists base verbs whose verbal noun can be derived
-// by prefixing.
-var verbalNounPrefixableVerbs = map[string]string{
+// verbalNounPrefixable marks base verbs whose verbal noun can be derived
+// by stripping a prefix and looking up the base in irregularVerbalNouns.
+var verbalNounPrefixable = map[string]bool{
 	// Monosyllabic -ić verbs
-	"bić": "bić", "gnić": "gnić", "pić": "pić", "wić": "wić",
+	"bić": true, "gnić": true, "pić": true, "wić": true,
 	// powić: po+wić, keeps monosyllabic ending
-	"powić": "powić",
+	"powić": true,
 	// Monosyllabic -yć verbs
-	"być": "być", "żyć": "żyć", "myć": "myć", "ryć": "ryć",
-	"szyć": "szyć", "kryć": "kryć", "wyć": "wyć", "tyć": "tyć",
+	"być": true, "żyć": true, "myć": true, "ryć": true,
+	"szyć": true, "kryć": true, "wyć": true, "tyć": true,
 	// -c verbs
-	"biec": "biec", "ciec": "ciec", "lec": "lec", "móc": "móc",
-	"piec": "piec", "rzec": "rzec", "siec": "siec", "strzec": "strzec",
-	"strzyc": "strzyc", "tłuc": "tłuc", "wlec": "wlec",
-	"prząc": "prząc", "siąc": "siąc", "ląc": "ląc",
+	"biec": true, "ciec": true, "lec": true, "móc": true,
+	"piec": true, "rzec": true, "siec": true, "strzec": true,
+	"strzyc": true, "tłuc": true, "wlec": true,
+	"prząc": true, "siąc": true, "ląc": true,
 	// -ść verbs
-	"bość": "bość", "bóść": "bóść", "gnieść": "gnieść", "grześć": "grześć",
-	"iść": "iść", "jeść": "jeść", "kraść": "kraść", "kłaść": "kłaść",
-	"mieść": "mieść", "nieść": "nieść", "paść": "paść", "pleść": "pleść",
-	"prząść": "prząść", "róść": "róść", "siąść": "siąść", "trząść": "trząść",
-	// -jść (prefixed iść, e.g. dojść, przejść)
-	"jść": "jść",
-	// -nijść (e.g. wnijść, wynijść)
-	"nijść": "nijść",
-	// -niść (e.g. wniść, wyniść)
-	"niść": "niść",
+	"bość": true, "bóść": true, "gnieść": true, "grześć": true,
+	"iść": true, "jeść": true, "kraść": true, "kłaść": true,
+	"mieść": true, "nieść": true, "paść": true, "pleść": true,
+	"prząść": true, "róść": true, "siąść": true, "trząść": true,
+	// -jść/-niść (prefixed iść)
+	"jść": true, "nijść": true, "niść": true,
 	// -źć verbs
-	"gryźć": "gryźć", "grząźć": "grząźć", "leźć": "leźć", "liźć": "liźć",
-	"wieźć": "wieźć",
+	"gryźć": true, "grząźć": true, "leźć": true, "liźć": true,
+	"wieźć": true,
 	// -eć → -arcie family
-	"drzeć": "drzeć", "mrzeć": "mrzeć", "przeć": "przeć",
-	"trzeć": "trzeć", "wrzeć": "wrzeć", "żreć": "żreć",
+	"drzeć": true, "mrzeć": true, "przeć": true,
+	"trzeć": true, "wrzeć": true, "żreć": true,
 	// mleć/pleć
-	"mleć": "mleć", "pleć": "pleć",
+	"mleć": true, "pleć": true,
 	// słonić
-	"słonić": "słonić",
+	"słonić": true,
 	// -eć softening exceptions
-	"musieć": "musieć", "wisieć": "wisieć",
-	"chrzęścieć": "chrzęścieć",
+	"musieć": true, "wisieć": true, "chrzęścieć": true,
 	// gzić
-	"gzić": "gzić",
+	"gzić": true,
 	// -ić softening exceptions (prefixable)
-	"mierzić":   "mierzić",
-	"gałęzić":   "gałęzić",
-	"więzić":     "więzić",
-	"francuzić":  "francuzić",
-	"lesić":      "lesić",
-	"tłamsić":    "tłamsić",
+	"mierzić": true, "gałęzić": true, "więzić": true,
+	"francuzić": true, "lesić": true, "tłamsić": true,
 	// Compound prefix bases with their own verbal noun forms
-	"zbyć":  "zbyć",
-	"dobyć": "dobyć",
-	"użyć":  "użyć",
-	"pożyć": "pożyć",
-	// poszyć/sposzyć — szyć compounds
-	"poszyć": "poszyć",
+	"zbyć": true, "dobyć": true, "użyć": true, "pożyć": true,
+	// poszyć — szyć compound
+	"poszyć": true,
 	// Compound bases for -c/-ść/-źć
-	"wieść": "wieść", "żec": "żec", "wściec": "wściec",
-	"oblec": "oblec", "sieść": "sieść",
-	"pomóc": "pomóc", "domóc": "domóc",
-	"naleźć": "naleźć", "najść": "najść",
-	"upaść": "upaść", "podnieść": "podnieść",
-	"przysiąc": "przysiąc", "niemóc": "niemóc",
-	"postrzec": "postrzec", "wsiąść": "wsiąść",
-	"strząść": "strząść",
-	// śnić: irregular — śnienie
-	"śnić": "śnić",
-	// czcić/chrzcić — c→cz in rzc cluster
-	"czcić": "czcić", "chrzcić": "chrzcić",
+	"wieść": true, "żec": true, "wściec": true,
+	"oblec": true, "sieść": true,
+	"pomóc": true, "domóc": true,
+	"naleźć": true, "najść": true,
+	"upaść": true, "podnieść": true,
+	"przysiąc": true, "niemóc": true,
+	"postrzec": true, "wsiąść": true,
+	"strząść": true,
+	// śnić
+	"śnić": true,
+	// czcić/chrzcić
+	"czcić": true, "chrzcić": true,
+}
+
+// epentheticPrefixes maps epenthetic prefix forms to their short forms.
+var epentheticPrefixes = map[string]string{
+	"ode": "od", "pode": "pod", "nade": "nad", "roze": "roz",
+	"wze": "wz", "obe": "ob", "we": "w", "ze": "z",
 }
 
 // lookupIrregularVerbalNoun checks the irregular map, including prefix stripping.
@@ -487,8 +482,8 @@ func lookupIrregularVerbalNoun(infinitive string) ([]string, bool) {
 	for _, prefix := range verbPrefixes {
 		if len(infinitive) > len(prefix) && infinitive[:len(prefix)] == prefix {
 			base := infinitive[len(prefix):]
-			if baseKey, ok := verbalNounPrefixableVerbs[base]; ok {
-				if baseForms, ok := irregularVerbalNouns[baseKey]; ok {
+			if verbalNounPrefixable[base] {
+				if baseForms, ok := irregularVerbalNouns[base]; ok {
 					p := stripEpentheticVowelForGerund(prefix, baseForms[0])
 					forms := make([]string, len(baseForms))
 					for i, f := range baseForms {
@@ -506,14 +501,10 @@ func lookupIrregularVerbalNoun(infinitive string) ([]string, bool) {
 // stripEpentheticVowelForGerund strips the trailing 'e' from prefixes like
 // "ode", "pode", etc. for verbal noun derivation.
 // For single-consonant short prefixes (z, w), the epenthetic vowel is kept
-// before sibilants (s, ś, ź, z, ż, sz) and w to avoid unpronounceable clusters.
+// before s-family sibilants (s, ś, ź, z, sz) and before consonant clusters
+// that would be unpronounceable (ww, zwl-, etc.).
 func stripEpentheticVowelForGerund(prefix, baseForm string) string {
-	epenthetic := map[string]string{
-		"ode": "od", "pode": "pod", "nade": "nad", "roze": "roz",
-		"wze": "wz", "obe": "ob", "we": "w", "ze": "z",
-	}
-
-	short, ok := epenthetic[prefix]
+	short, ok := epentheticPrefixes[prefix]
 	if !ok {
 		return prefix
 	}
@@ -554,12 +545,4 @@ func stripEpentheticVowelForGerund(prefix, baseForm string) string {
 	}
 
 	return short
-}
-
-// nijść is a special compound base: ni + jść. We handle it specially
-// to avoid needing it in the irregular map as a separate entry.
-func init() {
-	// Register "nijść" as a prefixable base
-	irregularVerbalNouns["nijść"] = []string{"nijście"}
-	verbalNounPrefixableVerbs["nijść"] = "nijść"
 }
