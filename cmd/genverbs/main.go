@@ -47,7 +47,7 @@ type Tense string
 const (
 	TensePresent Tense = "present"
 	TensePast    Tense = "past"
-	TenseGerund  Tense = "gerund"
+	TenseVerbalNoun  Tense = "verbal_noun"
 )
 
 // VerbForm represents a single conjugated form with its grammatical tags.
@@ -99,8 +99,8 @@ type PastParadigm struct {
 	Aspect string `json:"aspect"`
 }
 
-// GerundEntry holds an infinitive and its verbal noun form.
-type GerundEntry struct {
+// VerbalNounEntry holds an infinitive and its verbal noun form.
+type VerbalNounEntry struct {
 	Infinitive string `json:"infinitive"`
 	VerbalNoun string `json:"verbal_noun"`
 }
@@ -144,7 +144,7 @@ var knownPatterns = []conjugationPattern{
 
 func main() {
 	inputPath := flag.String("input", "data/polish.txt.bz2", "path to polish.txt.bz2")
-	tense := flag.String("tense", "present", "tense to extract: present, past, or gerund")
+	tense := flag.String("tense", "present", "tense to extract: present, past, or verbal_noun")
 	flag.Parse()
 
 	f, err := os.Open(*inputPath)
@@ -157,9 +157,9 @@ func main() {
 	reader := bzip2.NewReader(f)
 	scanner := bufio.NewScanner(reader)
 
-	// Gerund mode uses a different extraction path
-	if Tense(*tense) == TenseGerund {
-		extractGerunds(scanner)
+	// Verbal noun mode uses a different extraction path
+	if Tense(*tense) == TenseVerbalNoun {
+		extractVerbalNouns(scanner)
 		return
 	}
 
@@ -174,7 +174,7 @@ func main() {
 	case TensePast:
 		tagPrefix = "verb:praet:"
 	default:
-		fmt.Fprintf(os.Stderr, "unknown tense: %s (use 'present', 'past', or 'gerund')\n", *tense)
+		fmt.Fprintf(os.Stderr, "unknown tense: %s (use 'present', 'past', or 'verbal_noun')\n", *tense)
 		os.Exit(1)
 	}
 
@@ -707,14 +707,14 @@ func isPastParadigmCoherent(p PastParadigm) bool {
 	return true
 }
 
-// extractGerunds scans Polimorf for verbal noun (gerund) forms.
+// extractVerbalNouns scans Polimorf for verbal noun forms.
 // Matches tags containing "ger:sg:nom:" with ":aff:" (affirmative).
 // Emits one entry per (infinitive, verbal_noun) pair.
-func extractGerunds(scanner *bufio.Scanner) {
+func extractVerbalNouns(scanner *bufio.Scanner) {
 	// Use a set to deduplicate (infinitive, form) pairs
 	type pair struct{ inf, form string }
 	seen := make(map[pair]bool)
-	var entries []GerundEntry
+	var entries []VerbalNounEntry
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -724,7 +724,7 @@ func extractGerunds(scanner *bufio.Scanner) {
 		}
 		lemma, form, tags := parts[0], parts[1], parts[2]
 
-		// Match gerund nominative singular affirmative
+		// Match verbal noun nominative singular affirmative
 		if !strings.Contains(tags, "ger:") {
 			continue
 		}
@@ -737,7 +737,7 @@ func extractGerunds(scanner *bufio.Scanner) {
 			continue
 		}
 		seen[p] = true
-		entries = append(entries, GerundEntry{Infinitive: lemma, VerbalNoun: form})
+		entries = append(entries, VerbalNounEntry{Infinitive: lemma, VerbalNoun: form})
 	}
 
 	if err := scanner.Err(); err != nil {

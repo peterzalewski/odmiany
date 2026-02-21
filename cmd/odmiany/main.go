@@ -11,12 +11,12 @@ import (
 
 func main() {
 	past := flag.Bool("past", false, "show past tense conjugation")
-	gerund := flag.Bool("gerund", false, "show verbal noun (rzeczownik odsłownikowy)")
+	vn := flag.Bool("vn", false, "show verbal noun (rzeczownik odsłownikowy)")
 	flag.Parse()
 
 	verbs := flag.Args()
 	if len(verbs) < 1 {
-		fmt.Fprintln(os.Stderr, "usage: odmiany [-past|-gerund] <verb> [verb2] [verb3] ...")
+		fmt.Fprintln(os.Stderr, "usage: odmiany [-past|-vn] <verb> [verb2] [verb3] ...")
 		os.Exit(1)
 	}
 
@@ -24,7 +24,7 @@ func main() {
 
 	for i, infinitive := range verbs {
 		switch {
-		case *gerund:
+		case *vn:
 			showVerbalNoun(infinitive)
 		case *past:
 			showPastTense(infinitive, compact)

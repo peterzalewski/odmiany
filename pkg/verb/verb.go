@@ -162,8 +162,12 @@ func ConjugatePresent(infinitive string) ([]Paradigm, error) {
 	}
 
 	// Check irregular verbs (including prefixed forms)
-	if p, ok := lookupIrregularWithPrefix(infinitive); ok {
-		return []Paradigm{{PresentTense: p}}, nil
+	if ps, prefix, ok := lookupIrregularPres(infinitive); ok {
+		pt := ps.build()
+		if prefix != "" {
+			pt = applyPrefixToPresent(prefix, pt)
+		}
+		return []Paradigm{{PresentTense: pt}}, nil
 	}
 
 	// Try heuristics in order of specificity
@@ -1430,41 +1434,20 @@ func heuristicEc(infinitive string) (PresentTense, bool) {
 
 	// Most -ieć verbs conjugate as -ieję/-iejesz (891 vs 26)
 	if strings.HasSuffix(infinitive, "ieć") {
-		// -umieć family: umieć → umiem
+		// -umieć family: umieć → umiem (Class IV)
 		if strings.HasSuffix(infinitive, "umieć") {
 			stem := strings.TrimSuffix(infinitive, "ć")
-			return PresentTense{
-				Sg1: stem + "m",
-				Sg2: stem + "sz",
-				Sg3: stem,
-				Pl1: stem + "my",
-				Pl2: stem + "cie",
-				Pl3: stem + "ją",
-			}, true
+			return presSpec{stem: stem, class: ConjIV}.build(), true
 		}
-		// -wiedzieć family: wiedzieć → wiem (ie→∅ in present)
+		// -wiedzieć family: wiedzieć → wiem (Class IV with irregular pl3)
 		if strings.HasSuffix(infinitive, "wiedzieć") {
 			stem := strings.TrimSuffix(infinitive, "iedzieć")
-			return PresentTense{
-				Sg1: stem + "iem",
-				Sg2: stem + "iesz",
-				Sg3: stem + "ie",
-				Pl1: stem + "iemy",
-				Pl2: stem + "iecie",
-				Pl3: stem + "iedzą",
-			}, true
+			return presSpec{stem: stem + "ie", sg13: stem + "iedz", class: ConjIV}.build(), true
 		}
-		// śmieć: śmieć → śmiem
+		// śmieć: śmieć → śmiem (Class IV)
 		if infinitive == "śmieć" || strings.HasSuffix(infinitive, "ośmieć") {
 			stem := strings.TrimSuffix(infinitive, "ć")
-			return PresentTense{
-				Sg1: stem + "m",
-				Sg2: stem + "sz",
-				Sg3: stem,
-				Pl1: stem + "my",
-				Pl2: stem + "cie",
-				Pl3: stem + "ją",
-			}, true
+			return presSpec{stem: stem, class: ConjIV}.build(), true
 		}
 		// chcieć: chcieć → chcę (special -ę/-esz pattern)
 		if strings.HasSuffix(infinitive, "chcieć") {

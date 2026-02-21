@@ -13,9 +13,50 @@ func ConjugatePast(infinitive string) ([]PastParadigm, error) {
 		return paradigms, nil
 	}
 
-	// Check irregular verbs (including prefixed forms)
-	if p, ok := lookupPastIrregularWithPrefix(infinitive); ok {
-		return []PastParadigm{{PastTense: p}}, nil
+	// Direct irregular lookup first — entries with custom stems
+	// (e.g. wejść→wszedł, obejść→obszedł, przeschnąć) take precedence.
+	if s, ok := irregularSpecs[infinitive]; ok && s.past != nil {
+		return []PastParadigm{{PastTense: s.past.build()}}, nil
+	}
+
+	// Handle -nijść verbs (archaic variant): wnijść → wszedł (must come before -jść)
+	if strings.HasSuffix(infinitive, "nijść") {
+		prefix := strings.TrimSuffix(infinitive, "nijść")
+		if prefix != "" {
+			return []PastParadigm{{PastTense: buildJscPast(prefix)}}, nil
+		}
+	}
+
+	// Handle -jść verbs (prefixed iść): przejść → przeszedł
+	if strings.HasSuffix(infinitive, "jść") {
+		prefix := strings.TrimSuffix(infinitive, "jść")
+		if prefix != "" {
+			return []PastParadigm{{PastTense: buildJscPast(prefix)}}, nil
+		}
+	}
+
+	// Handle -niść verbs (archaic/dialectal variants of -jść): wniść → wszedł
+	if strings.HasSuffix(infinitive, "niść") {
+		prefix := strings.TrimSuffix(infinitive, "niść")
+		if prefix != "" {
+			return []PastParadigm{{PastTense: buildJscPast(prefix)}}, nil
+		}
+	}
+
+	// Handle prefixed -schnąć verbs: obeschnąć → obsechł/obeschła
+	// Must come before prefix stripping because buildSchnacPast handles
+	// asymmetric epenthesis (strip in sg3m, keep in other forms).
+	if strings.HasSuffix(infinitive, "schnąć") && infinitive != "schnąć" {
+		return []PastParadigm{{PastTense: buildSchnacPast(infinitive)}}, nil
+	}
+
+	// Check irregular verbs via prefix stripping
+	if ps, prefix, ok := lookupIrregularPast(infinitive); ok {
+		pt := ps.build()
+		if prefix != "" {
+			pt = applyPrefixToPast(prefix, pt)
+		}
+		return []PastParadigm{{PastTense: pt}}, nil
 	}
 
 	// Check for dual-form -nąć verbs (both n-dropping and n-keeping valid)

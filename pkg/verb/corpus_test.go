@@ -317,26 +317,26 @@ func TestCorpusPastAccuracy(t *testing.T) {
 	}
 }
 
-type gerundCorpusEntry struct {
+type verbalNounCorpusEntry struct {
 	Infinitive string `json:"infinitive"`
 	VerbalNoun string `json:"verbal_noun"`
 }
 
-func loadGerundCorpus(t *testing.T) []gerundCorpusEntry {
+func loadVerbalNounCorpus(t *testing.T) []verbalNounCorpusEntry {
 	t.Helper()
-	data, err := os.ReadFile("testdata/verbs_gerund.json")
+	data, err := os.ReadFile("testdata/verbs_verbal_noun.json")
 	if err != nil {
-		t.Fatalf("failed to load gerund corpus: %v", err)
+		t.Fatalf("failed to load verbal noun corpus: %v", err)
 	}
-	var entries []gerundCorpusEntry
+	var entries []verbalNounCorpusEntry
 	if err := json.Unmarshal(data, &entries); err != nil {
-		t.Fatalf("failed to parse gerund corpus: %v", err)
+		t.Fatalf("failed to parse verbal noun corpus: %v", err)
 	}
 	return entries
 }
 
 func TestCorpusVerbalNounAccuracy(t *testing.T) {
-	entries := loadGerundCorpus(t)
+	entries := loadVerbalNounCorpus(t)
 
 	// Group corpus entries by infinitive (some verbs have multiple valid forms)
 	byInfinitive := make(map[string][]string)

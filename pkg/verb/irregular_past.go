@@ -66,12 +66,6 @@ func buildWlecHomograph(prefix string) []PastParadigm {
 }
 
 func init() {
-	// Expand pastSpecs into full paradigms
-	irregularPastVerbs = make(map[string]PastTense, len(irregularPastSpecs))
-	for verb, spec := range irregularPastSpecs {
-		irregularPastVerbs[verb] = spec.build()
-	}
-
 	// Add homographs for prefixed -paść verbs
 	pascPrefixes := []string{"do", "na", "od", "o", "pod", "po", "prze", "przy", "roz", "s", "u", "w", "wy", "za", "zaprze"}
 	for _, p := range pascPrefixes {
@@ -451,91 +445,6 @@ var irregularPastSpecs = map[string]pastSpec{
 	// rosnąć → rósł/rosła (special n-dropping with ó→o)
 	"rosnąć": {stem: "ros", virile: "roś", sg3m: "rósł"},
 	"rość":   {stem: "ros", virile: "roś", sg3m: "rósł"},
-}
-
-// irregularPastVerbs is populated by init() from irregularPastSpecs.
-var irregularPastVerbs map[string]PastTense
-
-// pastPrefixableVerbs lists verbs that can take prefixes in past tense.
-var pastPrefixableVerbs = map[string]bool{
-	"być": true, "iść": true, "jeść": true, "brać": true, "prać": true,
-	"jąć": true, "dąć": true, "ciąć": true, "giąć": true, "piąć": true, "miąć": true, "nająć": true,
-	"żąć": true, "kląć": true, "wziąć": true,
-	"siąść": true, "paść": true, "kraść": true, "kłaść": true, "prząść": true,
-	"gryźć": true, "leźć": true, "wieźć": true, "nieść": true,
-	"pleść": true, "grześć": true, "tłuc": true,
-	"przeć": true, "wrzeć": true, "trzeć": true, "drzeć": true, "mrzeć": true, "żreć": true,
-	"dać": true, "stać": true, "mieć": true,
-	"wiedzieć": true, "siedzieć": true, "widzieć": true,
-	"biec": true, "lec": true, "rzec": true, "ciec": true, "strzec": true, "piec": true, "wlec": true,
-	"rosnąć": true, "rość": true, "schnąć": true, "przysięgnąć": true,
-	// Suppletive/special stems
-	"umrzeć": true, // for ob-/od-/wy- prefixes (obumrzeć, wymrzeć)
-	"mleć":   true, // for na-/o-/po-/prze-/u-/z- prefixes (namleć, zmleć)
-	"pleć":   true, // for na-/o-/po-/u-/wy- prefixes (napleć, wypleć)
-	"żec":    true, // for pod-/przy-/wy-/za- prefixes (podżec, wyżec)
-}
-
-// lookupPastIrregular checks if a verb has an irregular past tense paradigm.
-func lookupPastIrregular(infinitive string) (PastTense, bool) {
-	p, ok := irregularPastVerbs[infinitive]
-	return p, ok
-}
-
-// lookupPastIrregularWithPrefix tries to find an irregular past tense verb,
-// including checking if it's a prefixed form of a known irregular.
-func lookupPastIrregularWithPrefix(infinitive string) (PastTense, bool) {
-	// Direct lookup first
-	if p, ok := irregularPastVerbs[infinitive]; ok {
-		return p, ok
-	}
-
-	// Handle -nijść verbs (archaic variant): wnijść → wszedł (must come before -jść)
-	if strings.HasSuffix(infinitive, "nijść") {
-		prefix := strings.TrimSuffix(infinitive, "nijść")
-		if prefix != "" {
-			return buildJscPast(prefix), true
-		}
-	}
-
-	// Handle -jść verbs (prefixed iść): przejść → przeszedł
-	if strings.HasSuffix(infinitive, "jść") {
-		prefix := strings.TrimSuffix(infinitive, "jść")
-		if prefix != "" {
-			// przejść → przeszedł, wyjść → wyszedł, etc.
-			return buildJscPast(prefix), true
-		}
-	}
-
-	// Handle -niść verbs (archaic/dialectal variants of -jść): wniść → wszedł
-	if strings.HasSuffix(infinitive, "niść") {
-		prefix := strings.TrimSuffix(infinitive, "niść")
-		if prefix != "" {
-			// wniść → wszedł, wyniść → wyszedł, zniść → zszedł, etc.
-			return buildJscPast(prefix), true
-		}
-	}
-
-	// Handle prefixed -schnąć verbs: obeschnąć → obsechł/obeschła
-	// These have asymmetric stems (masc sg vs others) and complex epenthetic handling.
-	if strings.HasSuffix(infinitive, "schnąć") && infinitive != "schnąć" {
-		return buildSchnacPast(infinitive), true
-	}
-
-	// Try stripping prefixes to find base irregular verb
-	for _, prefix := range verbPrefixes {
-		if len(infinitive) > len(prefix) && infinitive[:len(prefix)] == prefix {
-			base := infinitive[len(prefix):]
-			if pastPrefixableVerbs[base] {
-				if baseParadigm, ok := irregularPastVerbs[base]; ok {
-					// Apply prefix to all forms
-					return applyPrefixToPast(prefix, baseParadigm), true
-				}
-			}
-		}
-	}
-
-	return PastTense{}, false
 }
 
 // buildJscPast builds past tense for -jść verbs (prefixed iść).

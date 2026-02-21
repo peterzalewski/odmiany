@@ -11,7 +11,10 @@ import (
 // Examples: czytać → ["czytanie"], pić → ["picie"], ciec → ["cieczenie", "cieknięcie"]
 func VerbalNoun(infinitive string) ([]string, error) {
 	// 1. Check irregular lookup (with prefix support)
-	if forms, ok := lookupIrregularVerbalNoun(infinitive); ok {
+	if forms, prefix, ok := lookupIrregularVN(infinitive); ok {
+		if prefix != "" {
+			return applyPrefixToVerbalNoun(prefix, forms), nil
+		}
 		return forms, nil
 	}
 
@@ -60,15 +63,15 @@ func VerbalNoun(infinitive string) ([]string, error) {
 // verbalNounNac handles -nąć verbs: strip -nąć, soften before ń, add -nięcie.
 func verbalNounNac(infinitive string) []string {
 	stem := strings.TrimSuffix(infinitive, "nąć")
-	softStem := softenBeforeNForGerund(stem)
+	softStem := softenBeforeNForVN(stem)
 	return []string{softStem + "nięcie"}
 }
 
-// softenBeforeNForGerund softens the final consonant of a stem before ń
+// softenBeforeNForVN softens the final consonant of a stem before ń
 // in verbal noun derivation.
 //   - s → ś unless preceded by p, k, or m (ps, ks, ms clusters don't soften)
 //   - z → ź unless z is part of rz, cz, or łz cluster
-func softenBeforeNForGerund(stem string) string {
+func softenBeforeNForVN(stem string) string {
 	if strings.HasSuffix(stem, "s") {
 		if len(stem) >= 2 {
 			before := stem[len(stem)-2]
@@ -113,7 +116,7 @@ func verbalNounIc(infinitive string) []string {
 	}
 
 	// Try standard softening (but not for s in ks/ps clusters)
-	if softStem, ok := applySofteningForGerund(stem); ok {
+	if softStem, ok := applySofteningForVN(stem); ok {
 		return []string{softStem + "enie"}
 	}
 
@@ -145,7 +148,7 @@ func verbalNounYc(infinitive string) []string {
 func verbalNounEc(infinitive string) []string {
 	// -Cieć pattern: consonant + ieć
 	// Strip -ieć, check soft/hard, add -enie or -ienie.
-	// Note: softening (s→sz etc.) is NOT productive for -eC-ieć gerunds —
+	// Note: softening (s→sz etc.) is NOT productive for -eC-ieć verbal nouns —
 	// the few exceptions (musieć, wisieć, chrzęścieć) are handled as irregulars.
 	if strings.HasSuffix(infinitive, "ieć") && len(infinitive) > 3 {
 		stem := strings.TrimSuffix(infinitive, "ieć")
@@ -164,9 +167,9 @@ func verbalNounEc(infinitive string) []string {
 	return []string{stem + "enie"}
 }
 
-// applySofteningForGerund applies consonant softening for -ić verbal nouns.
+// applySofteningForVN applies consonant softening for -ić verbal nouns.
 // Unlike present tense softening, s in consonant clusters (ks, ps) doesn't soften.
-func applySofteningForGerund(stem string) (string, bool) {
+func applySofteningForVN(stem string) (string, bool) {
 	if endsInSoftConsonant(stem) {
 		return "", false
 	}
@@ -406,143 +409,4 @@ var irregularVerbalNouns = map[string][]string{
 	"zrzeć":   {"żarcie"},
 }
 
-// verbalNounPrefixable marks base verbs whose verbal noun can be derived
-// by stripping a prefix and looking up the base in irregularVerbalNouns.
-var verbalNounPrefixable = map[string]bool{
-	// Monosyllabic -ić verbs
-	"bić": true, "gnić": true, "pić": true, "wić": true,
-	// powić: po+wić, keeps monosyllabic ending
-	"powić": true,
-	// Monosyllabic -yć verbs
-	"być": true, "żyć": true, "myć": true, "ryć": true,
-	"szyć": true, "kryć": true, "wyć": true, "tyć": true,
-	// -c verbs
-	"biec": true, "ciec": true, "lec": true, "móc": true,
-	"piec": true, "rzec": true, "siec": true, "strzec": true,
-	"strzyc": true, "tłuc": true, "wlec": true,
-	"prząc": true, "siąc": true, "ląc": true,
-	// -ść verbs
-	"bość": true, "bóść": true, "gnieść": true, "grześć": true,
-	"iść": true, "jeść": true, "kraść": true, "kłaść": true,
-	"mieść": true, "nieść": true, "paść": true, "pleść": true,
-	"prząść": true, "róść": true, "siąść": true, "trząść": true,
-	// -jść/-niść (prefixed iść)
-	"jść": true, "nijść": true, "niść": true,
-	// -źć verbs
-	"gryźć": true, "grząźć": true, "leźć": true, "liźć": true,
-	"wieźć": true,
-	// -eć → -arcie family
-	"drzeć": true, "mrzeć": true, "przeć": true,
-	"trzeć": true, "wrzeć": true, "żreć": true,
-	// mleć/pleć
-	"mleć": true, "pleć": true,
-	// słonić
-	"słonić": true,
-	// -eć softening exceptions
-	"musieć": true, "wisieć": true, "chrzęścieć": true,
-	// gzić
-	"gzić": true,
-	// -ić softening exceptions (prefixable)
-	"mierzić": true, "gałęzić": true, "więzić": true,
-	"francuzić": true, "lesić": true, "tłamsić": true,
-	// Compound prefix bases with their own verbal noun forms
-	"zbyć": true, "dobyć": true, "użyć": true, "pożyć": true,
-	// poszyć — szyć compound
-	"poszyć": true,
-	// Compound bases for -c/-ść/-źć
-	"wieść": true, "żec": true, "wściec": true,
-	"oblec": true, "sieść": true,
-	"pomóc": true, "domóc": true,
-	"naleźć": true, "najść": true,
-	"upaść": true, "podnieść": true,
-	"przysiąc": true, "niemóc": true,
-	"postrzec": true, "wsiąść": true,
-	"strząść": true,
-	// śnić
-	"śnić": true,
-	// czcić/chrzcić
-	"czcić": true, "chrzcić": true,
-}
 
-// epentheticPrefixes maps epenthetic prefix forms to their short forms.
-var epentheticPrefixes = map[string]string{
-	"ode": "od", "pode": "pod", "nade": "nad", "roze": "roz",
-	"wze": "wz", "obe": "ob", "we": "w", "ze": "z",
-}
-
-// lookupIrregularVerbalNoun checks the irregular map, including prefix stripping.
-// Handles epenthetic vowels in prefixes (ode+przeć → odeprzeć → odparcie).
-func lookupIrregularVerbalNoun(infinitive string) ([]string, bool) {
-	// Direct lookup
-	if forms, ok := irregularVerbalNouns[infinitive]; ok {
-		return forms, true
-	}
-
-	// Try stripping prefixes
-	for _, prefix := range verbPrefixes {
-		if len(infinitive) > len(prefix) && infinitive[:len(prefix)] == prefix {
-			base := infinitive[len(prefix):]
-			if verbalNounPrefixable[base] {
-				if baseForms, ok := irregularVerbalNouns[base]; ok {
-					p := stripEpentheticVowelForGerund(prefix, baseForms[0])
-					forms := make([]string, len(baseForms))
-					for i, f := range baseForms {
-						forms[i] = p + f
-					}
-					return forms, true
-				}
-			}
-		}
-	}
-
-	return nil, false
-}
-
-// stripEpentheticVowelForGerund strips the trailing 'e' from prefixes like
-// "ode", "pode", etc. for verbal noun derivation.
-// For single-consonant short prefixes (z, w), the epenthetic vowel is kept
-// before s-family sibilants (s, ś, ź, z, sz) and before consonant clusters
-// that would be unpronounceable (ww, zwl-, etc.).
-func stripEpentheticVowelForGerund(prefix, baseForm string) string {
-	short, ok := epentheticPrefixes[prefix]
-	if !ok {
-		return prefix
-	}
-
-	if len(baseForm) > 0 {
-		firstRune, _ := utf8.DecodeRuneInString(baseForm)
-		// Keep epenthetic vowel if base starts with a vowel
-		if isPolishVowel(firstRune) {
-			return prefix
-		}
-		// Keep epenthetic vowel for -jść forms (nadejść → nadejście)
-		if strings.HasPrefix(baseForm, "jście") || strings.HasPrefix(baseForm, "jść") {
-			return prefix
-		}
-		// For single-consonant short prefixes (z, w), keep epenthetic vowel
-		// to avoid unpronounceable clusters at the prefix boundary.
-		if len(short) == 1 {
-			// Keep before s-family sibilants (zs, zś, zsz, wś are bad clusters)
-			if firstRune == 's' || firstRune == 'ś' || firstRune == 'ź' ||
-				firstRune == 'z' {
-				return prefix
-			}
-			if strings.HasPrefix(baseForm, "sz") {
-				return prefix
-			}
-			// Keep we- before w (avoid ww doubling)
-			if short == "w" && firstRune == 'w' {
-				return prefix
-			}
-			// Keep ze- before w+consonant (avoid clusters like zwl-)
-			if short == "z" && firstRune == 'w' && len(baseForm) >= 2 {
-				secondRune, _ := utf8.DecodeRuneInString(baseForm[utf8.RuneLen(firstRune):])
-				if !isPolishVowel(secondRune) {
-					return prefix
-				}
-			}
-		}
-	}
-
-	return short
-}
