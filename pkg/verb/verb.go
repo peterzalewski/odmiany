@@ -162,7 +162,7 @@ func ConjugatePresent(infinitive string) ([]Paradigm, error) {
 	}
 
 	// Check irregular verbs (including prefixed forms)
-	if ps, prefix, ok := lookupIrregularPres(infinitive); ok {
+	if ps, prefix, ok := lookupIrregularPresent(infinitive); ok {
 		pt := ps.build()
 		if prefix != "" {
 			pt = applyPrefixToPresent(prefix, pt)
@@ -1437,17 +1437,17 @@ func heuristicEc(infinitive string) (PresentTense, bool) {
 		// -umieć family: umieć → umiem (Class IV)
 		if strings.HasSuffix(infinitive, "umieć") {
 			stem := strings.TrimSuffix(infinitive, "ć")
-			return presSpec{stem: stem, class: ConjIV}.build(), true
+			return presentSpec{stem: stem, class: ConjIV}.build(), true
 		}
 		// -wiedzieć family: wiedzieć → wiem (Class IV with irregular pl3)
 		if strings.HasSuffix(infinitive, "wiedzieć") {
 			stem := strings.TrimSuffix(infinitive, "iedzieć")
-			return presSpec{stem: stem + "ie", sg13: stem + "iedz", class: ConjIV}.build(), true
+			return presentSpec{stem: stem + "ie", sg13: stem + "iedz", class: ConjIV}.build(), true
 		}
 		// śmieć: śmieć → śmiem (Class IV)
 		if infinitive == "śmieć" || strings.HasSuffix(infinitive, "ośmieć") {
 			stem := strings.TrimSuffix(infinitive, "ć")
-			return presSpec{stem: stem, class: ConjIV}.build(), true
+			return presentSpec{stem: stem, class: ConjIV}.build(), true
 		}
 		// chcieć: chcieć → chcę (special -ę/-esz pattern)
 		if strings.HasSuffix(infinitive, "chcieć") {

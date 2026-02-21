@@ -10,9 +10,9 @@ const (
 	ConjIV  byte = 'E' // Class IV:  -em, -esz, -e, -emy, -ecie, -(j)ą
 )
 
-// presSpec compactly describes a present tense paradigm.
+// presentSpec compactly describes a present tense paradigm.
 // At most 2 stems + a class byte; expanded to full PresentTense by build().
-type presSpec struct {
+type presentSpec struct {
 	stem  string // stem for Sg2/Sg3/Pl1/Pl2 (and Sg1/Pl3 if sg13 is empty)
 	sg13  string // Sg1/Pl3 stem override (defaults to stem)
 	class byte   // ConjI, ConjIIa, ConjIIb, ConjIII, or ConjIV
@@ -24,7 +24,7 @@ type presSpec struct {
 	pl3   string // complete Pl3 form override
 }
 
-func (s presSpec) build() PresentTense {
+func (s presentSpec) build() PresentTense {
 	sg13 := s.sg13
 	if sg13 == "" {
 		sg13 = s.stem
@@ -86,121 +86,121 @@ var homographs = map[string][]Paradigm{
 	// stać: "to stand" (imperfective) vs "to become/afford" (perfective)
 	"stać": {
 		{
-			PresentTense: presSpec{sg13: "stoj", stem: "sto", class: ConjIIa}.build(),
+			PresentTense: presentSpec{sg13: "stoj", stem: "sto", class: ConjIIa}.build(),
 			Gloss:        "to stand",
 		},
 		{
-			PresentTense: presSpec{sg13: "stan", stem: "stani", class: ConjI}.build(),
+			PresentTense: presentSpec{sg13: "stan", stem: "stani", class: ConjI}.build(),
 			Gloss:        "to become, to afford",
 		},
 	},
 	// słać: "to send" vs "to spread (bedding)"
 	"słać": {
 		{
-			PresentTense: presSpec{stem: "śl", class: ConjI}.build(),
+			PresentTense: presentSpec{stem: "śl", class: ConjI}.build(),
 			Gloss:        "to send",
 		},
 		{
-			PresentTense: presSpec{stem: "ściel", class: ConjI}.build(),
+			PresentTense: presentSpec{stem: "ściel", class: ConjI}.build(),
 			Gloss:        "to spread (bedding)",
 		},
 	},
 	// boleć: "physical pain" vs "to grieve/worry" (inchoative)
 	"boleć": {
 		{
-			PresentTense: presSpec{stem: "bol", class: ConjIIa}.build(),
+			PresentTense: presentSpec{stem: "bol", class: ConjIIa}.build(),
 			Gloss:        "to hurt (physical pain)",
 		},
 		{
-			PresentTense: presSpec{stem: "bolej", class: ConjI}.build(),
+			PresentTense: presentSpec{stem: "bolej", class: ConjI}.build(),
 			Gloss:        "to grieve, to worry",
 		},
 	},
 	// stajać: frequentative of stać (both patterns attested)
 	"stajać": {
 		{
-			PresentTense: presSpec{stem: "staj", class: ConjI}.build(),
+			PresentTense: presentSpec{stem: "staj", class: ConjI}.build(),
 			Gloss:        "to keep standing/stopping (frequentative)",
 		},
 		{
-			PresentTense: presSpec{stem: "staj", class: ConjIII}.build(),
+			PresentTense: presentSpec{stem: "staj", class: ConjIII}.build(),
 			Gloss:        "to keep standing/stopping (variant)",
 		},
 	},
 	// chlać: vulgar "to gulp" (both patterns attested)
 	"chlać": {
 		{
-			PresentTense: presSpec{stem: "chl", class: ConjIII}.build(),
+			PresentTense: presentSpec{stem: "chl", class: ConjIII}.build(),
 			Gloss:        "to gulp/slurp (vulgar)",
 		},
 		{
-			PresentTense: presSpec{stem: "chlej", class: ConjI}.build(),
+			PresentTense: presentSpec{stem: "chlej", class: ConjI}.build(),
 			Gloss:        "to gulp/slurp (variant)",
 		},
 	},
 	// ziajać: both -am and -ę patterns attested
 	"ziajać": {
 		{
-			PresentTense: presSpec{stem: "ziaj", class: ConjIII}.build(),
+			PresentTense: presentSpec{stem: "ziaj", class: ConjIII}.build(),
 			Gloss:        "to pant/gasp",
 		},
 		{
-			PresentTense: presSpec{stem: "ziaj", class: ConjI}.build(),
+			PresentTense: presentSpec{stem: "ziaj", class: ConjI}.build(),
 			Gloss:        "to pant/gasp (variant)",
 		},
 	},
 	// bajać: both -am and -ę patterns attested
 	"bajać": {
 		{
-			PresentTense: presSpec{stem: "baj", class: ConjIII}.build(),
+			PresentTense: presentSpec{stem: "baj", class: ConjIII}.build(),
 			Gloss:        "to tell fairy tales",
 		},
 		{
-			PresentTense: presSpec{stem: "baj", class: ConjI}.build(),
+			PresentTense: presentSpec{stem: "baj", class: ConjI}.build(),
 			Gloss:        "to tell fairy tales (variant)",
 		},
 	},
 	// przytajać: both -am and -ę patterns attested
 	"przytajać": {
 		{
-			PresentTense: presSpec{stem: "przytaj", class: ConjIII}.build(),
+			PresentTense: presentSpec{stem: "przytaj", class: ConjIII}.build(),
 			Gloss:        "to crouch/hide",
 		},
 		{
-			PresentTense: presSpec{stem: "przytaj", class: ConjI}.build(),
+			PresentTense: presentSpec{stem: "przytaj", class: ConjI}.build(),
 			Gloss:        "to crouch/hide (variant)",
 		},
 	},
 	// kaszliwać: both -iwuję and -uję patterns attested
 	"kaszliwać": {
 		{
-			PresentTense: presSpec{stem: "kaszliwuj", class: ConjI}.build(),
+			PresentTense: presentSpec{stem: "kaszliwuj", class: ConjI}.build(),
 			Gloss:        "to cough (frequentative)",
 		},
 		{
-			PresentTense: presSpec{stem: "kaszluj", class: ConjI}.build(),
+			PresentTense: presentSpec{stem: "kaszluj", class: ConjI}.build(),
 			Gloss:        "to cough (frequentative, variant)",
 		},
 	},
 	// połajać: both -am and -ę patterns attested (different from other łajać prefixes)
 	"połajać": {
 		{
-			PresentTense: presSpec{stem: "połaj", class: ConjIII}.build(),
+			PresentTense: presentSpec{stem: "połaj", class: ConjIII}.build(),
 			Gloss:        "to scold",
 		},
 		{
-			PresentTense: presSpec{stem: "połaj", class: ConjI}.build(),
+			PresentTense: presentSpec{stem: "połaj", class: ConjI}.build(),
 			Gloss:        "to scold (variant)",
 		},
 	},
 	// pyskiwać: both -iwuję and -uję patterns attested
 	"pyskiwać": {
 		{
-			PresentTense: presSpec{stem: "pyskiwuj", class: ConjI}.build(),
+			PresentTense: presentSpec{stem: "pyskiwuj", class: ConjI}.build(),
 			Gloss:        "to talk back",
 		},
 		{
-			PresentTense: presSpec{stem: "pyskuj", class: ConjI}.build(),
+			PresentTense: presentSpec{stem: "pyskuj", class: ConjI}.build(),
 			Gloss:        "to talk back (variant)",
 		},
 	},
@@ -252,9 +252,9 @@ func lookupHomograph(infinitive string) ([]Paradigm, bool) {
 	return nil, false
 }
 
-// irregularPresSpecs defines present tense stems compactly.
+// irregularPresentSpecs defines present tense stems compactly.
 // Expanded to full PresentTense paradigms by init().
-var irregularPresSpecs = map[string]presSpec{
+var irregularPresentSpecs = map[string]presentSpec{
 	// Suppletive / highly irregular
 	"być": {
 		class: ConjIV, // suppletive - all forms overridden

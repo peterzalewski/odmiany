@@ -8,7 +8,7 @@ import (
 // verbSpec unifies all irregular data for a single verb.
 // nil fields mean "derive from heuristics".
 type verbSpec struct {
-	pres       *presSpec // nil = derive from heuristics
+	present    *presentSpec // nil = derive from heuristics
 	past       *pastSpec // nil = derive from heuristics
 	verbalNoun []string  // nil = derive from heuristics
 }
@@ -119,10 +119,10 @@ func buildIrregularSpecs() map[string]verbSpec {
 	}
 
 	// 1. Populate from present tense specs
-	for verb, ps := range irregularPresSpecs {
+	for verb, ps := range irregularPresentSpecs {
 		s := get(verb)
 		ps := ps // copy
-		s.pres = &ps
+		s.present = &ps
 		specs[verb] = s
 	}
 
@@ -146,12 +146,12 @@ func buildIrregularSpecs() map[string]verbSpec {
 	return specs
 }
 
-// lookupIrregularPres looks up a verb's present tense spec in the unified map,
+// lookupIrregularPresent looks up a verb's present tense spec in the unified map,
 // including prefix-stripping for known prefixable bases.
-func lookupIrregularPres(infinitive string) (ps presSpec, prefix string, found bool) {
+func lookupIrregularPresent(infinitive string) (ps presentSpec, prefix string, found bool) {
 	// Direct lookup first
-	if s, ok := irregularSpecs[infinitive]; ok && s.pres != nil {
-		return *s.pres, "", true
+	if s, ok := irregularSpecs[infinitive]; ok && s.present != nil {
+		return *s.present, "", true
 	}
 
 	// Try stripping prefixes to find base irregular verb
@@ -159,14 +159,14 @@ func lookupIrregularPres(infinitive string) (ps presSpec, prefix string, found b
 		if len(infinitive) > len(pfx) && infinitive[:len(pfx)] == pfx {
 			base := infinitive[len(pfx):]
 			if prefixableVerbs[base] {
-				if s, ok := irregularSpecs[base]; ok && s.pres != nil {
-					return *s.pres, pfx, true
+				if s, ok := irregularSpecs[base]; ok && s.present != nil {
+					return *s.present, pfx, true
 				}
 			}
 		}
 	}
 
-	return presSpec{}, "", false
+	return presentSpec{}, "", false
 }
 
 // lookupIrregularPast looks up a verb's past tense spec in the unified map,
